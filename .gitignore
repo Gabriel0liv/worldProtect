@@ -1,2 +1,66 @@
-/.gradle
-/build
+# Gradle
+.gradle/
+build/
+**/build/
+out/
+**/out/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# Minecraft / mod development runtime dirs
+run/
+runs/
+server/
+client/
+logs/
+crash-reports/
+debug/
+config/
+saves/
+world/
+worlds/
+mods/
+libraries/
+
+# Java / JVM
+*.log
+*.log.gz
+hs_err_pid*
+replay_pid*
+*.hprof
+
+# Local env
+.env
+.env.*
+*.local
+local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Reference source code - local only
+ref_source/*
+!ref_source/README.md
+!ref_source/.gitkeep

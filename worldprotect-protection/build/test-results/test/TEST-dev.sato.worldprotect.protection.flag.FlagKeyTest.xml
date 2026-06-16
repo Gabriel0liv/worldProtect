@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="dev.sato.worldprotect.protection.flag.FlagKeyTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-06-16T11:00:40" hostname="DESKTOP-1SQ6CT0" time="0.093">
-  <properties/>
-  <testcase name="testValidFlagKeys()" classname="dev.sato.worldprotect.protection.flag.FlagKeyTest" time="0.073"/>
-  <testcase name="testInvalidFlagKeys()" classname="dev.sato.worldprotect.protection.flag.FlagKeyTest" time="0.005"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
