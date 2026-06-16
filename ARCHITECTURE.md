@@ -5,7 +5,7 @@
 ## High-Level Design: Core vs. Platform (WorldEdit Inspiration)
 
 Following the proven architecture of WorldEdit, `worldProtect` separates its design into core business logic and loader-specific platform adapters:
-- **Core Modules (`worldprotect-core`, `worldprotect-protection`, `worldprotect-audit`)**: House Pure Java code, domain models, and logic rules. They do not depend on loader APIs or Minecraft classes.
+- **Core Modules (`worldprotect-core`, `worldprotect-protection`, `worldprotect-audit`)**: House pure Java code, domain models, and logic rules. They do not depend on loader APIs or Minecraft classes.
 - **Platform Adapters (`worldprotect-fabric`, `worldprotect-neoforge`)**: Bind the core logic to the game loop. They intercept events (e.g. block placement, right-clicks) and forward them to the core services.
 
 This ensures that the business logic can be tested entirely using lightweight JUnit tests without spinning up a heavy Minecraft server instance.
@@ -39,12 +39,8 @@ graph TD
 
 ## Generic Inventory Strategy
 
-To support arbitrary modded inventories without manually coding integrations for thousands of mods, we employ a layered inventory logging and access strategy:
+Generic inventory access should start from platform-independent snapshots and later be backed by vanilla menus/block entities, NeoForge IItemHandler and Fabric Transfer API.
 
-1. **Generic Inventory Access**: First, access containers using standard Minecraft container and inventory classes (`Container` in vanilla/loader terms).
-2. **NeoForge Capabilities / Fabric Transfer API**: Later, wrap capability-based (`IItemHandler`) and Fabric Transfer API (`Storage<ItemVariant>`) interfaces to track transactions on advanced pipes, chests, and machines.
-3. **Snapshot and Diff Fallback**: If an inventory does not expose a standard API, we take periodic snapshots and calculate the diff to determine item changes.
-4. **Compatibility Modules**: Added only as a last resort for virtual, remote, or networked storage systems (such as AE2 or Refined Storage) where item storage is not physically local or represented by a standard inventory.
 
 ## Resource ID Validation Strategy
 

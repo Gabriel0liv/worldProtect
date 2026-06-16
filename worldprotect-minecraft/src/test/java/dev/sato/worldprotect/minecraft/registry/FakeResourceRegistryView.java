@@ -4,6 +4,7 @@ import dev.sato.worldprotect.minecraft.ResourceRef;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -15,16 +16,20 @@ public final class FakeResourceRegistryView implements ResourceRegistryView {
     private final Map<ResourceKind, Set<ResourceRef>> registeredIds = new HashMap<>();
 
     public void addNamespace(String namespace) {
-        if (namespace != null && !namespace.isEmpty()) {
-            loadedNamespaces.add(namespace);
+        Objects.requireNonNull(namespace, "namespace must not be null");
+        if (namespace.isEmpty()) {
+            throw new IllegalArgumentException("Namespace must not be empty");
         }
+        // Validate namespace format using ResourceRef's built-in rules
+        ResourceRef.of(namespace, "dummy");
+        loadedNamespaces.add(namespace);
     }
 
     public void registerId(ResourceKind kind, ResourceRef id) {
-        if (kind != null && id != null) {
-            registeredIds.computeIfAbsent(kind, k -> new HashSet<>()).add(id);
-            loadedNamespaces.add(id.namespace());
-        }
+        Objects.requireNonNull(kind, "kind must not be null");
+        Objects.requireNonNull(id, "id must not be null");
+        registeredIds.computeIfAbsent(kind, k -> new HashSet<>()).add(id);
+        loadedNamespaces.add(id.namespace());
     }
 
     @Override

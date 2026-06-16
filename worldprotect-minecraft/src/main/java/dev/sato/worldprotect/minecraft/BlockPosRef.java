@@ -48,8 +48,10 @@ public final class BlockPosRef {
 
     @Override
     public int hashCode() {
-        // Simple 3D coordinate hash
-        return x ^ (z << 12) ^ (y << 24);
+        int result = Integer.hashCode(x);
+        result = 31 * result + Integer.hashCode(y);
+        result = 31 * result + Integer.hashCode(z);
+        return result;
     }
 
     @Override

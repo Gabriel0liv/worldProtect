@@ -20,11 +20,13 @@ public interface ResourceRegistryView {
 
     /**
      * Gets all namespaces currently loaded.
+     * Implementations must return an immutable set or a defensive copy.
      */
     Set<String> loadedNamespaces();
 
     /**
      * Gets all resource IDs currently registered under a specific kind.
+     * Implementations must return an immutable set or a defensive copy.
      */
     Set<ResourceRef> ids(ResourceKind kind);
 }

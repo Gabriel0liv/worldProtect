@@ -103,4 +103,16 @@ public final class ResourceValidatorTest {
         assertThrows(NullPointerException.class, () -> validator.validate(null, ResourceRef.parse("minecraft:stone")));
         assertThrows(NullPointerException.class, () -> validator.validate(ResourceKind.BLOCK, null));
     }
+
+    @Test
+    public void testFakeRegistryNamespaceValidation() {
+        assertThrows(NullPointerException.class, () -> registry.addNamespace(null));
+        assertThrows(IllegalArgumentException.class, () -> registry.addNamespace(""));
+        assertThrows(IllegalArgumentException.class, () -> registry.addNamespace("UPPERCASE"));
+        assertThrows(IllegalArgumentException.class, () -> registry.addNamespace("invalid/char"));
+        
+        // Valid should pass
+        registry.addNamespace("valid-name.space_1");
+        assertTrue(registry.namespaceLoaded("valid-name.space_1"));
+    }
 }
