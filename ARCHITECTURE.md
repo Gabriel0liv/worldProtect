@@ -89,6 +89,21 @@ We represent the plugin configuration in memory using a platform-independent mod
 - **Loader Decoupling**: Platform adapter modules (Fabric/NeoForge) must not implement mapping or configuration domain logic. They will only parse file formats into the in-memory config model and trigger validation.
 
 
+## TOML Configuration Parser
+
+The TOML configuration parser is isolated under the `worldprotect-config` module.
+
+- **Parser Isolation**: Only the `worldprotect-config` module depends on the TOML parsing library (`org.tomlj:tomlj`). The core and domain protection modules remain clean and independent of any parser library.
+- **Conversion to Config Model**: The parser reads TOML content or files and converts them into the existing platform-independent configuration model (`WorldProtectConfig`).
+- **Parser-Level Error Handling**: The parser handles syntax errors, missing required fields, and incorrect TOML value types. It generates detailed diagnostics with `ERROR` severity for any structural errors.
+- **Separation of Validation Concerns**:
+  1. Parser validates TOML syntax, types, and schema.
+  2. Domain validation (`validate(FlagRegistry)`) checks for unknown flags, bounds, and selector syntax.
+  3. Semantic validation (`ConfigResourceValidator`) checks namespaces against the runtime `ResourceRegistryView`.
+- **Loader Decoupling**: No loader APIs or Minecraft runtime dependencies are involved in the parsing process. Platform adapter modules will later utilize this parser to bootstrap region settings.
+
+
+
 ## Resource ID Validation Strategy
 
 We employ a strict two-layered validation process for all Minecraft identifiers and resource keys:

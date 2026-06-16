@@ -9,3 +9,5 @@ include("worldprotect-compat-api")
 include("worldprotect-neoforge")
 include("worldprotect-fabric")
 include("verification")
+include("worldprotect-config")
+

@@ -52,6 +52,14 @@ This document lists strict instructions that all future AI agents working on thi
 - **Non-Throwing Validation**: Keep configuration validation immutable and non-throwing where possible. Accumulate all warnings and errors rather than failing fast.
 - **Throw on Mapping Only**: Mapping/conversion via `ConfigToDomainMapper` can throw `IllegalArgumentException` if validation was skipped, but validation itself must collect errors gracefully.
 
+## TOML Configuration Parser Rules
+
+- **TOML Parser Module Isolation**: The TOML parsing library (`org.tomlj:tomlj`) must remain isolated in `worldprotect-config`. Do not add TOML dependencies to `worldprotect-core`, `worldprotect-minecraft`, or `worldprotect-protection`.
+- **No ID Normalization**: The TOML parser must not normalize (lowercase) region IDs, dimension IDs, or resource selectors. Only flag state enum values may be parsed case-insensitively.
+- **Diagnostics Validation Flow**: TomlConfigParser must return a success result only when there are no ERROR diagnostics. Warnings are allowed to propagate in successful parses.
+- **No Parser Extensions**: Do not add file watchers, hot-reload triggers, or YAML/JSON libraries until explicitly requested.
+
+
 
 
 

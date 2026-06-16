@@ -83,6 +83,15 @@ project(":worldprotect-compat-api") {
     }
 }
 
+project(":worldprotect-config") {
+    dependencies {
+        implementation(project(":worldprotect-core"))
+        implementation(project(":worldprotect-minecraft"))
+        implementation(project(":worldprotect-protection"))
+        implementation("org.tomlj:tomlj:1.1.1")
+    }
+}
+
 project(":worldprotect-neoforge") {
     dependencies {
         implementation(project(":worldprotect-core"))
@@ -113,5 +122,6 @@ project(":verification") {
         implementation(project(":worldprotect-neoforge"))
         implementation(project(":worldprotect-fabric"))
         implementation(project(":worldprotect-worldedit-bridge"))
+        implementation(project(":worldprotect-config"))
     }
 }
