@@ -23,6 +23,10 @@ public final class RegionId {
         return value;
     }
 
+    public static RegionId of(String value) {
+        return new RegionId(value);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

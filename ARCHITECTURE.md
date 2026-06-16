@@ -41,6 +41,17 @@ graph TD
 
 Generic inventory access should start from platform-independent snapshots and later be backed by vanilla menus/block entities, NeoForge IItemHandler and Fabric Transfer API.
 
+## Protection Query and Resolution Model
+
+We model all world protection checks using a clean, platform-independent representation of actions, causes, and targets:
+- **Action/Cause/Target Queries**: Every protection request is wrapped in a `ProtectionQuery` containing:
+  - An explicit `Actor` responsible for the action.
+  - A logical `ProtectionAction` representing the activity (e.g., `BUILD`, `BLOCK_BREAK`, `CONTAINER_OPEN`, `WORLD_MODIFY`). Modded interactions are normalized into these actions.
+  - A `CauseChain` detailing how the action occurred (e.g., player -> wrench item -> block modify).
+  - A `ProtectionTarget` detailing what is being acted upon (e.g., block, item, entity, container, fluid, or position).
+- **Explosion & Drop Separation**: Explosions evaluate separate decisions for block damage (`EXPLOSION_BLOCK_DAMAGE`), entity damage (`EXPLOSION_ENTITY_DAMAGE`), and item drops (`EXPLOSION_ITEM_DROP`). Additionally, block/entity drops are protected independently (`BLOCK_DROP`, `ENTITY_DROP`) from the action that caused the destruction.
+- **Loader Decoupling**: Fabric and NeoForge adapter modules will later translate physical game events into structured `ProtectionQuery` objects and delegate decision-making to the `ProtectionResolver`.
+
 ## Resource ID Validation Strategy
 
 We employ a strict two-layered validation process for all Minecraft identifiers and resource keys:

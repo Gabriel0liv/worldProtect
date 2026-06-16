@@ -23,6 +23,14 @@ public final class FlagKey {
         return name;
     }
 
+    public String getValue() {
+        return name;
+    }
+
+    public static FlagKey of(String name) {
+        return new FlagKey(name);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

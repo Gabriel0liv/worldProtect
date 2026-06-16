@@ -27,4 +27,9 @@ public interface Region {
      * Checks if the given position is contained within the bounds of this region.
      */
     boolean contains(BlockPosRef pos);
+
+    /**
+     * Gets the flags configured for this region.
+     */
+    RegionFlags flags();
 }

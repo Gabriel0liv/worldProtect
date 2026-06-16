@@ -13,8 +13,13 @@ public final class CuboidRegion implements Region {
     private final int minX, minY, minZ;
     private final int maxX, maxY, maxZ;
     private final int priority;
+    private final RegionFlags flags;
 
     public CuboidRegion(RegionId id, DimensionRef dimension, BlockPosRef pos1, BlockPosRef pos2, int priority) {
+        this(id, dimension, pos1, pos2, priority, RegionFlags.empty());
+    }
+
+    public CuboidRegion(RegionId id, DimensionRef dimension, BlockPosRef pos1, BlockPosRef pos2, int priority, RegionFlags flags) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.dimension = Objects.requireNonNull(dimension, "dimension must not be null");
         Objects.requireNonNull(pos1, "pos1 must not be null");
@@ -29,6 +34,7 @@ public final class CuboidRegion implements Region {
         this.maxZ = Math.max(pos1.getZ(), pos2.getZ());
         
         this.priority = priority;
+        this.flags = Objects.requireNonNull(flags, "flags must not be null");
     }
 
     @Override
@@ -47,6 +53,15 @@ public final class CuboidRegion implements Region {
     }
 
     @Override
+    public RegionFlags flags() {
+        return flags;
+    }
+
+    public RegionFlags getFlags() {
+        return flags;
+    }
+
+    @Override
     public boolean contains(BlockPosRef pos) {
         Objects.requireNonNull(pos, "pos must not be null");
         return pos.getX() >= minX && pos.getX() <= maxX &&
@@ -59,6 +74,6 @@ public final class CuboidRegion implements Region {
         return "CuboidRegion{id=" + id + ", dimension=" + dimension +
                ", min=(" + minX + "," + minY + "," + minZ + ")" +
                ", max=(" + maxX + "," + maxY + "," + maxZ + ")" +
-               ", priority=" + priority + "}";
+               ", priority=" + priority + ", flags=" + flags + "}";
     }
 }
