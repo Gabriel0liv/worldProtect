@@ -5,7 +5,7 @@
 ## High-Level Design: Core vs. Platform (WorldEdit Inspiration)
 
 Following the proven architecture of WorldEdit, `worldProtect` separates its design into core business logic and loader-specific platform adapters:
-- **Core Modules (`worldprotect-core`, `worldprotect-protection`, `worldprotect-audit`)**: House pure Java/Kotlin code, domain models, and logic rules. They do not depend on loader APIs or Minecraft classes.
+- **Core Modules (`worldprotect-core`, `worldprotect-protection`, `worldprotect-audit`)**: House Pure Java code, domain models, and logic rules. They do not depend on loader APIs or Minecraft classes.
 - **Platform Adapters (`worldprotect-fabric`, `worldprotect-neoforge`)**: Bind the core logic to the game loop. They intercept events (e.g. block placement, right-clicks) and forward them to the core services.
 
 This ensures that the business logic can be tested entirely using lightweight JUnit tests without spinning up a heavy Minecraft server instance.

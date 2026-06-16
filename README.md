@@ -39,4 +39,4 @@ The core goal of `worldProtect` is to combine the capabilities of:
 
 ## License
 
-This project is licensed under TBD. See [LICENSE.md](file:///d:/jogos/Dev%20Mine/Mods%20Pr%C3%B3prios/1.20.1/worldProtect/LICENSE.md) for details.
+This project is licensed under TBD. See [LICENSE.md](LICENSE.md) for details.
