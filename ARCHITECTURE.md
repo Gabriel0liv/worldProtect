@@ -46,7 +46,15 @@ To support arbitrary modded inventories without manually coding integrations for
 3. **Snapshot and Diff Fallback**: If an inventory does not expose a standard API, we take periodic snapshots and calculate the diff to determine item changes.
 4. **Compatibility Modules**: Added only as a last resort for virtual, remote, or networked storage systems (such as AE2 or Refined Storage) where item storage is not physically local or represented by a standard inventory.
 
+## Resource ID Validation Strategy
+
+We employ a strict two-layered validation process for all Minecraft identifiers and resource keys:
+
+1. **Syntactic Validation**: Checked immediately upon parsing inside `ResourceRef`. This verifies that the namespace and path conform to strict Minecraft character sets (only lowercase, digits, dots, dashes, and underscores/slashes) and correct formats, preventing config errors from executing.
+2. **Semantic Validation**: Evaluated against the `ResourceRegistryView` using a `ResourceValidator`. This checks whether a syntactically correct identifier is actually registered on the current modpack/server runtime (e.g., verifying if a custom block or mod exists). Fabric and NeoForge adapter modules will later supply concrete implementations of this registry view from live game registries.
+
 ## Threading Rules
+
 
 To ensure server performance and database integrity, we adhere to the following concurrency guidelines:
 

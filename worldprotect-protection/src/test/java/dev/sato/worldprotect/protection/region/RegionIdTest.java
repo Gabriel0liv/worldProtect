@@ -9,11 +9,15 @@ public final class RegionIdTest {
     public void testValidRegionIds() {
         assertDoesNotThrow(() -> new RegionId("region1"));
         assertDoesNotThrow(() -> new RegionId("my-spawn_zone-1"));
-        assertDoesNotThrow(() -> new RegionId("A"));
+        assertDoesNotThrow(() -> new RegionId("region.1"));
+        assertDoesNotThrow(() -> new RegionId("a"));
     }
 
     @Test
     public void testInvalidRegionIds() {
+        // Uppercase not allowed
+        assertThrows(IllegalArgumentException.class, () -> new RegionId("A"));
+        assertThrows(IllegalArgumentException.class, () -> new RegionId("Spawn-zone"));
         // Special characters not allowed
         assertThrows(IllegalArgumentException.class, () -> new RegionId("region@123"));
         // Spaces not allowed

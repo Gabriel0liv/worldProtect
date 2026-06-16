@@ -14,6 +14,18 @@ public final class BlockPosRef {
         this.z = z;
     }
 
+    public int x() {
+        return x;
+    }
+
+    public int y() {
+        return y;
+    }
+
+    public int z() {
+        return z;
+    }
+
     public int getX() {
         return x;
     }

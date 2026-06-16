@@ -7,14 +7,14 @@ import java.util.regex.Pattern;
  * Unique identifier for a protected region.
  */
 public final class RegionId {
-    private static final Pattern VALID_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-]{1,64}$");
+    private static final Pattern VALID_PATTERN = Pattern.compile("^[a-z0-9_\\-.]{1,64}$");
     
     private final String value;
 
     public RegionId(String value) {
         Objects.requireNonNull(value, "value must not be null");
         if (!VALID_PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException("Region ID must be alphanumeric and between 1 and 64 characters. Got: " + value);
+            throw new IllegalArgumentException("Region ID must be lowercase alphanumeric, dashes, dots, or underscores, and between 1 and 64 characters. Got: " + value);
         }
         this.value = value;
     }

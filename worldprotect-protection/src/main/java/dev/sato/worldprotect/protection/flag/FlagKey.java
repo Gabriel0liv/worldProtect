@@ -13,11 +13,10 @@ public final class FlagKey {
 
     public FlagKey(String name) {
         Objects.requireNonNull(name, "name must not be null");
-        String lowerName = name.toLowerCase();
-        if (!VALID_PATTERN.matcher(lowerName).matches()) {
-            throw new IllegalArgumentException("Flag name must be lowercase alphanumeric and dashes. Got: " + name);
+        if (!VALID_PATTERN.matcher(name).matches()) {
+            throw new IllegalArgumentException("Flag name must be lowercase alphanumeric and dashes, and between 1 and 64 characters. Got: " + name);
         }
-        this.name = lowerName;
+        this.name = name;
     }
 
     public String getName() {

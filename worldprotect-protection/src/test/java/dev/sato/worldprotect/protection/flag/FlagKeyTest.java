@@ -9,14 +9,13 @@ public final class FlagKeyTest {
     public void testValidFlagKeys() {
         assertDoesNotThrow(() -> new FlagKey("build"));
         assertDoesNotThrow(() -> new FlagKey("chest-access"));
-        
-        // Capitalization should be normalized to lowercase
-        FlagKey uppercase = new FlagKey("BUILD");
-        assertEquals("build", uppercase.getName());
     }
 
     @Test
     public void testInvalidFlagKeys() {
+        // Uppercase not allowed
+        assertThrows(IllegalArgumentException.class, () -> new FlagKey("BUILD"));
+        assertThrows(IllegalArgumentException.class, () -> new FlagKey("chest-Access"));
         // Spaces not allowed
         assertThrows(IllegalArgumentException.class, () -> new FlagKey("chest access"));
         // Underscores not allowed (only dashes)

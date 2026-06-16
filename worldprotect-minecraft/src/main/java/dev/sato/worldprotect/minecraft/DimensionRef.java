@@ -12,6 +12,14 @@ public final class DimensionRef {
         this.key = Objects.requireNonNull(key, "key must not be null");
     }
 
+    public ResourceRef key() {
+        return key;
+    }
+
+    public String asString() {
+        return key.asString();
+    }
+
     public ResourceRef getKey() {
         return key;
     }
