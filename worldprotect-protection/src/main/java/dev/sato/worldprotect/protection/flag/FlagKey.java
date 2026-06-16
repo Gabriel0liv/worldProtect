@@ -1,0 +1,44 @@
+package dev.sato.worldprotect.protection.flag;
+
+import java.util.Objects;
+import java.util.regex.Pattern;
+
+/**
+ * Key representation of a protection setting (e.g. "build", "chest-access", "pvp").
+ */
+public final class FlagKey {
+    private static final Pattern VALID_PATTERN = Pattern.compile("^[a-z0-9\\-]{1,64}$");
+    
+    private final String name;
+
+    public FlagKey(String name) {
+        Objects.requireNonNull(name, "name must not be null");
+        String lowerName = name.toLowerCase();
+        if (!VALID_PATTERN.matcher(lowerName).matches()) {
+            throw new IllegalArgumentException("Flag name must be lowercase alphanumeric and dashes. Got: " + name);
+        }
+        this.name = lowerName;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FlagKey flagKey = (FlagKey) o;
+        return name.equals(flagKey.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+}
