@@ -28,7 +28,7 @@ client/
 logs/
 crash-reports/
 debug/
-config/
+/config/
 saves/
 world/
 worlds/
