@@ -3,6 +3,7 @@ package dev.sato.worldprotect.protection.flag;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public final class FlagRegistry {
     }
 
     public synchronized Collection<FlagDefinition> definitions() {
-        return Collections.unmodifiableCollection(definitions.values());
+        return List.copyOf(definitions.values());
     }
 
     public static FlagRegistry withBuiltIns() {

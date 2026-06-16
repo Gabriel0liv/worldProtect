@@ -52,6 +52,32 @@ We model all world protection checks using a clean, platform-independent represe
 - **Explosion & Drop Separation**: Explosions evaluate separate decisions for block damage (`EXPLOSION_BLOCK_DAMAGE`), entity damage (`EXPLOSION_ENTITY_DAMAGE`), and item drops (`EXPLOSION_ITEM_DROP`). Additionally, block/entity drops are protected independently (`BLOCK_DROP`, `ENTITY_DROP`) from the action that caused the destruction.
 - **Loader Decoupling**: Fabric and NeoForge adapter modules will later translate physical game events into structured `ProtectionQuery` objects and delegate decision-making to the `ProtectionResolver`.
 
+### Flag Specificity Precedence
+Protection actions can map to multiple flags ordered from most specific to most generic.
+Examples:
+- `ITEM_USE_ON_BLOCK` checks `use-item-on-block` before `use-item`.
+- `BLOCK_BREAK` checks `break-block` before `build`.
+
+The first explicit decision found at the highest applicable priority level wins according to this mapped flag order. This means a specific flag can override a broader fallback flag.
+Within the same priority group and same evaluated flag:
+- `DENY` beats `ALLOW`
+- `ALLOW` beats `PASS`
+- `PASS` means continue
+
+## Conditional Flag Rules and Resource Selectors
+
+Region flags can be configured as simple states or as complex conditional rules:
+- **Simple Flags**: Retains compatibility with `ALLOW`, `DENY`, or `PASS` states, which are stored as rules with a simple fallback state and no resource filters.
+- **Conditional Rules (`FlagRule`)**: Configured with a default fallback state, allow selectors, and deny selectors. Evaluation order checks the deny list first, then the allow list, and falls back to the default state.
+- **Resource Selectors (`ResourceSelector`)**: Selectors can target resources using four matching kinds:
+  - `EXACT`: Matches an exact resource ID (e.g. `minecraft:stone`).
+  - `NAMESPACE_WILDCARD`: Matches any resource inside a mod namespace (e.g. `create:*`).
+  - `GLOBAL_WILDCARD`: Matches any resource ID (represented as `*`).
+  - `TAG`: Represents tag selectors (e.g. `#forge:chests` or `#c:tools`). The tag syntax parses syntactically, but does not match raw `ResourceRef` checks until a future `TagRegistryView` database/abstraction is added.
+- **Query Resource Extraction**: The `QueryResourceExtractor` is responsible for selecting the primary target resource from a query (e.g., target block, used item, target container, drop item, fluid) depending on the action checked, allowing modded items, containers, block entities, fluids, and explosions to be filtered by resource ID.
+
+
+
 ## Resource ID Validation Strategy
 
 We employ a strict two-layered validation process for all Minecraft identifiers and resource keys:

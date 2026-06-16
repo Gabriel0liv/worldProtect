@@ -1,5 +1,6 @@
 package dev.sato.worldprotect.protection.resolver;
 
+import dev.sato.worldprotect.minecraft.ResourceRef;
 import dev.sato.worldprotect.protection.flag.ActionFlagMapper;
 import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagState;
@@ -7,6 +8,8 @@ import dev.sato.worldprotect.protection.query.ProtectionQuery;
 import dev.sato.worldprotect.protection.result.ProtectionDecision;
 import dev.sato.worldprotect.protection.region.Region;
 import dev.sato.worldprotect.protection.region.RegionSet;
+import dev.sato.worldprotect.protection.rule.FlagRule;
+import dev.sato.worldprotect.protection.rule.QueryResourceExtractor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +52,8 @@ public final class ProtectionResolver {
         priorityGroups.add(currentGroup);
 
         List<FlagKey> mappedFlags = ActionFlagMapper.mapAction(query.getAction());
+        Optional<ResourceRef> resourceOpt = QueryResourceExtractor.primaryResource(query);
+        ResourceRef resource = resourceOpt.orElse(null);
 
         for (List<Region> group : priorityGroups) {
             int priority = group.get(0).getPriority();
@@ -58,20 +63,35 @@ public final class ProtectionResolver {
                 boolean hasAllow = false;
                 Region denyRegion = null;
                 Region allowRegion = null;
+                String denySource = "default";
+                String allowSource = "default";
 
                 for (Region region : group) {
-                    Optional<FlagState> stateOpt = region.flags().get(flagKey);
-                    if (stateOpt.isPresent()) {
-                        FlagState state = stateOpt.get();
-                        if (state == FlagState.DENY) {
+                    Optional<FlagRule> ruleOpt = region.flags().rule(flagKey);
+                    if (ruleOpt.isPresent()) {
+                        FlagRule rule = ruleOpt.get();
+                        FlagState resolvedState = rule.resolve(resource);
+
+                        String source = "default";
+                        if (resource != null) {
+                            if (rule.denySelectors().matches(resource)) {
+                                source = "deny selector";
+                            } else if (rule.allowSelectors().matches(resource)) {
+                                source = "allow selector";
+                            }
+                        }
+
+                        if (resolvedState == FlagState.DENY) {
                             hasDeny = true;
                             if (denyRegion == null) {
                                 denyRegion = region;
+                                denySource = source;
                             }
-                        } else if (state == FlagState.ALLOW) {
+                        } else if (resolvedState == FlagState.ALLOW) {
                             hasAllow = true;
                             if (allowRegion == null) {
                                 allowRegion = region;
+                                allowSource = source;
                             }
                         }
                     }
@@ -79,12 +99,14 @@ public final class ProtectionResolver {
 
                 // DENY beats ALLOW at the same priority level
                 if (hasDeny) {
-                    String reason = String.format("Action %s denied by flag %s in region %s (priority %d)",
-                            query.getAction(), flagKey.getValue(), denyRegion.getId().getValue(), priority);
+                    String resourceStr = resource != null ? " for resource " + resource : "";
+                    String reason = String.format("Action %s denied by flag %s in region %s (priority %d)%s (via %s)",
+                            query.getAction(), flagKey.getValue(), denyRegion.getId().getValue(), priority, resourceStr, denySource);
                     return ProtectionDecision.deny(reason, denyRegion.getId(), flagKey);
                 } else if (hasAllow) {
-                    String reason = String.format("Action %s allowed by flag %s in region %s (priority %d)",
-                            query.getAction(), flagKey.getValue(), allowRegion.getId().getValue(), priority);
+                    String resourceStr = resource != null ? " for resource " + resource : "";
+                    String reason = String.format("Action %s allowed by flag %s in region %s (priority %d)%s (via %s)",
+                            query.getAction(), flagKey.getValue(), allowRegion.getId().getValue(), priority, resourceStr, allowSource);
                     return ProtectionDecision.allow(reason, allowRegion.getId(), flagKey);
                 }
             }

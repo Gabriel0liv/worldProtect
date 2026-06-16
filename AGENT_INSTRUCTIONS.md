@@ -35,7 +35,14 @@ This document lists strict instructions that all future AI agents working on thi
 
 - **Do Not Collapse Protection to Build/Break/Place**: Always map logical actions precisely (e.g. use `CONTAINER_OPEN`, `FLUID_SPREAD`, `INVENTORY_INSERT`, `WORLD_MODIFY` where appropriate) instead of treating everything as a generic build/break action.
 - **Model Indirect Modifications with Cause Chains**: For automation, machines, or projectiles, always utilize a structured `CauseChain` (e.g., player -> item -> projectile -> explosion) rather than assuming players are the direct cause.
-- **Independent Explosion and Drop Control**: Keep block damage (`EXPLOSION_BLOCK_DAMAGE`), entity damage (`EXPLOSION_ENTITY_DAMAGE`), and item drops (`EXPLOSION_ITEM_DROP` / `BLOCK_DROP` / `ENTITY_DROP`) as distinct, independently controllable check actions.
 - **Treat Modded Item Use as First-Class**: Ensure wrench actions and modded block entities are resolved using appropriate cause type and target identifiers.
+
+- **Do Not Collapse Conditional Flag Rules**: Keep flag rule abstractions (`FlagRule`) and resource selectors supported. Do not revert region flag structures back to simple states only.
+- **Do Not Parse Configuration Files**: Do not write file parsing code for YAML, TOML, or JSON configs until the explicit config parser task is initiated.
+- **Do Not Implement Tag Registry View**: Do not implement tag membership resolution or search code without a proper, abstract `TagRegistryView` interface. Tag selectors must only evaluate syntactically for now.
+- **Do Not Assume Targets**: Do not assume item use always targets a block; item use can target entities or occur in the air.
+- **Do Not Collapse Explosion Damage**: Explosions can affect blocks, entities, and drops. Ensure these are handled by independent actions rather than single event assumptions.
+- **Do Not Introduce Loader Dependencies**: Keep all logic, including rules and resource selectors, completely platform-independent. Do not add Fabric, NeoForge, or other loaders to the build classpath.
+
 
 
