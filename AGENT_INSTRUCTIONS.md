@@ -44,5 +44,14 @@ This document lists strict instructions that all future AI agents working on thi
 - **Do Not Collapse Explosion Damage**: Explosions can affect blocks, entities, and drops. Ensure these are handled by independent actions rather than single event assumptions.
 - **Do Not Introduce Loader Dependencies**: Keep all logic, including rules and resource selectors, completely platform-independent. Do not add Fabric, NeoForge, or other loaders to the build classpath.
 
+## In-Memory Configuration Rules
+
+- **No Config Libraries**: Do not introduce YAML, TOML, JSON, or any other config parsing libraries until the parser task.
+- **No Loader/Game Coupling**: Do not couple config classes (`WorldProtectConfig`, `RegionConfig`, etc.) to Fabric, NeoForge, or Minecraft runtime.
+- **No Height Limit Validation**: Do not validate dimension height limits in `BoundsConfig` since limits depend on custom dimensions and modpacks.
+- **Non-Throwing Validation**: Keep configuration validation immutable and non-throwing where possible. Accumulate all warnings and errors rather than failing fast.
+- **Throw on Mapping Only**: Mapping/conversion via `ConfigToDomainMapper` can throw `IllegalArgumentException` if validation was skipped, but validation itself must collect errors gracefully.
+
+
 
 

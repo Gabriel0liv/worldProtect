@@ -77,6 +77,17 @@ Region flags can be configured as simple states or as complex conditional rules:
 - **Query Resource Extraction**: The `QueryResourceExtractor` is responsible for selecting the primary target resource from a query (e.g., target block, used item, target container, drop item, fluid) depending on the action checked, allowing modded items, containers, block entities, fluids, and explosions to be filtered by resource ID.
 
 
+## In-Memory Configuration Model
+
+We represent the plugin configuration in memory using a platform-independent model that mirrors the logical structure of a future persistent file layout (e.g. YAML/TOML/JSON).
+
+- **No File Parsing**: This layer does not parse physical configuration files directly. It deals purely with Java configuration representation objects (`WorldProtectConfig`, `RegionConfig`, `FlagRuleConfig`, `BoundsConfig`).
+- **Two-Layer Config Validation**:
+  1. **Structural Validation**: Validates coordinate bounds compatibility (e.g. `min <= max`), checks that flag keys are known in the registered `FlagRegistry`, validates selector syntax, and rejects duplicate region IDs. This is performed entirely in memory without game registries.
+  2. **Semantic Registry Validation**: Performed by `ConfigResourceValidator`. It checks whether namespaces of EXACT and `NAMESPACE_WILDCARD` selectors exist in the active `ResourceRegistryView`. It produces warnings for tags since tag membership checks require runtime resolution.
+- **Config-to-Domain Mapping**: The `ConfigToDomainMapper` class acts as the translator converting validated configuration objects directly into active domain entities (`RegionSet`, `CuboidRegion`, `RegionFlags`, `FlagRule`).
+- **Loader Decoupling**: Platform adapter modules (Fabric/NeoForge) must not implement mapping or configuration domain logic. They will only parse file formats into the in-memory config model and trigger validation.
+
 
 ## Resource ID Validation Strategy
 
