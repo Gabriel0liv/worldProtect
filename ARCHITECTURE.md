@@ -41,7 +41,6 @@ graph TD
 
 Generic inventory access should start from platform-independent snapshots and later be backed by vanilla menus/block entities, NeoForge IItemHandler and Fabric Transfer API.
 
-
 ## Resource ID Validation Strategy
 
 We employ a strict two-layered validation process for all Minecraft identifiers and resource keys:
@@ -50,7 +49,6 @@ We employ a strict two-layered validation process for all Minecraft identifiers 
 2. **Semantic Validation**: Evaluated against the `ResourceRegistryView` using a `ResourceValidator`. This checks whether a syntactically correct identifier is actually registered on the current modpack/server runtime (e.g., verifying if a custom block or mod exists). Fabric and NeoForge adapter modules will later supply concrete implementations of this registry view from live game registries.
 
 ## Threading Rules
-
 
 To ensure server performance and database integrity, we adhere to the following concurrency guidelines:
 
