@@ -3,7 +3,6 @@ package dev.sato.worldprotect.protection.region;
 import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagState;
 import dev.sato.worldprotect.protection.rule.FlagRule;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +65,7 @@ public final class RegionFlags {
     public Map<FlagKey, FlagState> asMap() {
         Map<FlagKey, FlagState> simpleMap = new HashMap<>();
         rules.forEach((key, rule) -> simpleMap.put(key, rule.defaultState()));
-        return Collections.unmodifiableMap(simpleMap);
+        return Map.copyOf(simpleMap);
     }
 
     @Override

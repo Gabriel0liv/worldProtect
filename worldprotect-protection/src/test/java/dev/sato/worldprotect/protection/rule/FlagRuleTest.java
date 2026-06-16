@@ -82,4 +82,39 @@ public final class FlagRuleTest {
         );
         assertEquals(FlagState.ALLOW, rule.resolve(null));
     }
+
+    @Test
+    public void testEvaluateOutputs() {
+        ResourceSelector allowSel = ResourceSelector.parse("create:*");
+        ResourceSelector denySel = ResourceSelector.parse("create:creative_motor");
+        ResourceSelectorSet allow = ResourceSelectorSet.of(List.of(allowSel));
+        ResourceSelectorSet deny = ResourceSelectorSet.of(List.of(denySel));
+        FlagRule rule = FlagRule.conditional(FlagState.DENY, allow, deny);
+
+        // evaluate() returns DENY_SELECTOR when deny selector matches
+        FlagRuleEvaluation evalDeny = rule.evaluate(ResourceRef.of("create", "creative_motor"));
+        assertEquals(FlagState.DENY, evalDeny.state());
+        assertEquals(FlagRuleMatchSource.DENY_SELECTOR, evalDeny.source());
+        assertTrue(evalDeny.matchedSelector().isPresent());
+        assertEquals(denySel, evalDeny.matchedSelector().get());
+
+        // evaluate() returns ALLOW_SELECTOR when allow selector matches
+        FlagRuleEvaluation evalAllow = rule.evaluate(ResourceRef.of("create", "wrench"));
+        assertEquals(FlagState.ALLOW, evalAllow.state());
+        assertEquals(FlagRuleMatchSource.ALLOW_SELECTOR, evalAllow.source());
+        assertTrue(evalAllow.matchedSelector().isPresent());
+        assertEquals(allowSel, evalAllow.matchedSelector().get());
+
+        // evaluate() returns DEFAULT when no selector matches
+        FlagRuleEvaluation evalDefault = rule.evaluate(ResourceRef.of("minecraft", "stone"));
+        assertEquals(FlagState.DENY, evalDefault.state());
+        assertEquals(FlagRuleMatchSource.DEFAULT, evalDefault.source());
+        assertFalse(evalDefault.matchedSelector().isPresent());
+
+        // evaluate() returns DEFAULT when resource is null
+        FlagRuleEvaluation evalNull = rule.evaluate(null);
+        assertEquals(FlagState.DENY, evalNull.state());
+        assertEquals(FlagRuleMatchSource.DEFAULT, evalNull.source());
+        assertFalse(evalNull.matchedSelector().isPresent());
+    }
 }

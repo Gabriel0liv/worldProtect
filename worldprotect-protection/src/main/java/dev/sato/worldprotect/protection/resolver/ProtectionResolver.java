@@ -9,6 +9,8 @@ import dev.sato.worldprotect.protection.result.ProtectionDecision;
 import dev.sato.worldprotect.protection.region.Region;
 import dev.sato.worldprotect.protection.region.RegionSet;
 import dev.sato.worldprotect.protection.rule.FlagRule;
+import dev.sato.worldprotect.protection.rule.FlagRuleEvaluation;
+import dev.sato.worldprotect.protection.rule.FlagRuleMatchSource;
 import dev.sato.worldprotect.protection.rule.QueryResourceExtractor;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,22 +65,19 @@ public final class ProtectionResolver {
                 boolean hasAllow = false;
                 Region denyRegion = null;
                 Region allowRegion = null;
-                String denySource = "default";
-                String allowSource = "default";
+                String denySource = FlagRuleMatchSource.DEFAULT.name();
+                String allowSource = FlagRuleMatchSource.DEFAULT.name();
 
                 for (Region region : group) {
                     Optional<FlagRule> ruleOpt = region.flags().rule(flagKey);
                     if (ruleOpt.isPresent()) {
                         FlagRule rule = ruleOpt.get();
-                        FlagState resolvedState = rule.resolve(resource);
+                        FlagRuleEvaluation evaluation = rule.evaluate(resource);
+                        FlagState resolvedState = evaluation.state();
 
-                        String source = "default";
-                        if (resource != null) {
-                            if (rule.denySelectors().matches(resource)) {
-                                source = "deny selector";
-                            } else if (rule.allowSelectors().matches(resource)) {
-                                source = "allow selector";
-                            }
+                        String source = evaluation.source().name();
+                        if (evaluation.matchedSelector().isPresent()) {
+                            source += ":" + evaluation.matchedSelector().get();
                         }
 
                         if (resolvedState == FlagState.DENY) {

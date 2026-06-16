@@ -60,20 +60,32 @@ public final class FlagRule {
     }
 
     /**
+     * Evaluates the rule against a resource reference, returning detail on match source and matched selector.
+     */
+    public FlagRuleEvaluation evaluate(ResourceRef resource) {
+        if (resource == null) {
+            return new FlagRuleEvaluation(defaultState, FlagRuleMatchSource.DEFAULT, null);
+        }
+        for (ResourceSelector selector : denySelectors.selectors()) {
+            if (selector.matches(resource)) {
+                return new FlagRuleEvaluation(FlagState.DENY, FlagRuleMatchSource.DENY_SELECTOR, selector);
+            }
+        }
+        for (ResourceSelector selector : allowSelectors.selectors()) {
+            if (selector.matches(resource)) {
+                return new FlagRuleEvaluation(FlagState.ALLOW, FlagRuleMatchSource.ALLOW_SELECTOR, selector);
+            }
+        }
+        return new FlagRuleEvaluation(defaultState, FlagRuleMatchSource.DEFAULT, null);
+    }
+
+    /**
      * Resolves the configured FlagState against a specific resource ID.
      */
     public FlagState resolve(ResourceRef resource) {
-        if (resource == null) {
-            return defaultState;
-        }
-        if (denySelectors.matches(resource)) {
-            return FlagState.DENY;
-        }
-        if (allowSelectors.matches(resource)) {
-            return FlagState.ALLOW;
-        }
-        return defaultState;
+        return evaluate(resource).state();
     }
+
 
     @Override
     public boolean equals(Object o) {

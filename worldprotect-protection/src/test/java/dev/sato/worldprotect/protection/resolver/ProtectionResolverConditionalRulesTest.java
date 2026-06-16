@@ -62,7 +62,7 @@ public final class ProtectionResolverConditionalRulesTest {
 
         ProtectionDecision decision = resolver.resolve(query, set);
         assertTrue(decision.isAllowed());
-        assertTrue(decision.reason().contains("allow selector"));
+        assertTrue(decision.reason().contains("ALLOW_SELECTOR:create:wrench"));
     }
 
     // 2. use-item default DENY denies non-allowed item
@@ -80,7 +80,7 @@ public final class ProtectionResolverConditionalRulesTest {
 
         ProtectionDecision decision = resolver.resolve(query, set);
         assertTrue(decision.isDenied());
-        assertTrue(decision.reason().contains("default"));
+        assertTrue(decision.reason().contains("DEFAULT"));
     }
 
     // 3. use-item default ALLOW with deny botania:twig_wand denies that item
@@ -98,7 +98,7 @@ public final class ProtectionResolverConditionalRulesTest {
 
         ProtectionDecision decision = resolver.resolve(query, set);
         assertTrue(decision.isDenied());
-        assertTrue(decision.reason().contains("deny selector"));
+        assertTrue(decision.reason().contains("DENY_SELECTOR:botania:twig_wand"));
     }
 
     // 4. namespace wildcard create:* allows create:wrench
@@ -116,7 +116,7 @@ public final class ProtectionResolverConditionalRulesTest {
 
         ProtectionDecision decision = resolver.resolve(query, set);
         assertTrue(decision.isAllowed());
-        assertTrue(decision.reason().contains("allow selector"));
+        assertTrue(decision.reason().contains("ALLOW_SELECTOR:create:*"));
     }
 
     // 5. global wildcard allow * allows any item
