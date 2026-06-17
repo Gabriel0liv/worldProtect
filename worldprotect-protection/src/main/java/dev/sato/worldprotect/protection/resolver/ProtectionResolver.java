@@ -52,28 +52,6 @@ public final class ProtectionResolver {
 
         RegionInheritanceResolver inheritanceResolver = new RegionInheritanceResolver(regionSet);
 
-        // Filter out parent regions that are inherited by other matched regions to prevent
-        // parent access policies or parent-specific bypass permissions from bypassing a child region decision.
-        java.util.Set<dev.sato.worldprotect.protection.region.RegionId> inheritedRegionIds = new java.util.HashSet<>();
-        for (Region r : matched) {
-            List<Region> lineage = inheritanceResolver.lineage(r);
-            for (int i = 1; i < lineage.size(); i++) {
-                inheritedRegionIds.add(lineage.get(i).getId());
-            }
-        }
-
-        List<Region> filteredMatched = new ArrayList<>();
-        for (Region r : matched) {
-            if (!inheritedRegionIds.contains(r.getId())) {
-                filteredMatched.add(r);
-            }
-        }
-        matched = filteredMatched;
-
-        if (matched.isEmpty()) {
-            return ProtectionDecision.pass("No matching regions found for action " + query.getAction());
-        }
-
         // Group matched regions by priority descending (since matched is already sorted by priority desc)
         List<List<Region>> priorityGroups = new ArrayList<>();
         List<Region> currentGroup = new ArrayList<>();

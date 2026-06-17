@@ -66,9 +66,9 @@ public final class ProtectionResolverInheritanceTest {
                 RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10,
                 RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY)))
         );
-        // Child is sub-region, has no flags
+        // Child is sub-region, has no flags, priority 20
         Region rChild = new CuboidRegion(
-                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 20,
                 RegionFlags.empty(), RegionSubjects.empty(), RegionAccessPolicy.defaults(),
                 Optional.of(RegionId.of("parent"))
         );
@@ -84,14 +84,14 @@ public final class ProtectionResolverInheritanceTest {
 
     @Test
     public void testChildOverrideParentRule() {
-        // Parent defines BLOCK_BREAK to DENY
+        // Parent defines BLOCK_BREAK to DENY, priority 10
         Region rParent = new CuboidRegion(
                 RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10,
                 RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY)))
         );
-        // Child overrides with ALLOW
+        // Child overrides with ALLOW, priority 20
         Region rChild = new CuboidRegion(
-                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 20,
                 RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.ALLOW))),
                 RegionSubjects.empty(), RegionAccessPolicy.defaults(),
                 Optional.of(RegionId.of("parent"))
@@ -110,7 +110,7 @@ public final class ProtectionResolverInheritanceTest {
         UUID playerUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
         SubjectRef ownerRef = SubjectRef.player(playerUuid);
         
-        // Parent defines DENY, owner is ownerRef, but parent access policy disallows bypass (ownersBypassFlags = false)
+        // Parent defines DENY, owner is ownerRef, but parent access policy disallows bypass, priority 10
         Region rParent = new CuboidRegion(
                 RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10,
                 RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY))),
@@ -118,9 +118,9 @@ public final class ProtectionResolverInheritanceTest {
                 RegionAccessPolicy.of(false, false, Set.of(), Set.of()) // parent disallows owner bypass
         );
 
-        // Child has no flags, inherits parent rule. Child access policy ALLOWS owner bypass (ownersBypassFlags = true)
+        // Child has no flags, inherits parent rule. Child access policy ALLOWS owner bypass, priority 20
         Region rChild = new CuboidRegion(
-                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 20,
                 RegionFlags.empty(),
                 RegionSubjects.empty(),
                 RegionAccessPolicy.of(true, false, Set.of(), Set.of()), // child allows owner bypass
@@ -150,7 +150,7 @@ public final class ProtectionResolverInheritanceTest {
         UUID playerUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
         SubjectRef ownerRef = SubjectRef.player(playerUuid);
 
-        // Parent defines DENY, owner is ownerRef. Parent access policy allows owner bypass (ownersBypassFlags = true)
+        // Parent defines DENY, owner is ownerRef. Parent access policy allows owner bypass, priority 10
         Region rParent = new CuboidRegion(
                 RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10,
                 RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY))),
@@ -158,9 +158,9 @@ public final class ProtectionResolverInheritanceTest {
                 RegionAccessPolicy.of(true, false, Set.of(), Set.of()) // parent allows
         );
 
-        // Child inherits parent rule. Child access policy disallows owner bypass (ownersBypassFlags = false)
+        // Child inherits parent rule. Child access policy disallows owner bypass, priority 20
         Region rChild = new CuboidRegion(
-                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 20,
                 RegionFlags.empty(),
                 RegionSubjects.empty(),
                 RegionAccessPolicy.of(false, false, Set.of(), Set.of()), // child disallows
@@ -186,15 +186,15 @@ public final class ProtectionResolverInheritanceTest {
     public void testParentPermissionBypassDoesNotApplyToChild() {
         UUID playerUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
-        // Parent defines DENY
+        // Parent defines DENY, priority 10
         Region rParent = new CuboidRegion(
                 RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10,
                 RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY)))
         );
 
-        // Child inherits parent rule. Child access policy allows owner bypass.
+        // Child inherits parent rule. Child access policy allows owner bypass, priority 20.
         Region rChild = new CuboidRegion(
-                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 20,
                 RegionFlags.empty(),
                 RegionSubjects.empty(),
                 RegionAccessPolicy.of(true, false, Set.of(), Set.of()), // child allows
@@ -215,5 +215,86 @@ public final class ProtectionResolverInheritanceTest {
         // Resolve query. Parent permission bypass must not bypass child decision. Must return DENY.
         ProtectionDecision decision = resolver.resolve(query, set, ctx);
         assertEquals(DecisionState.DENY, decision.state());
+    }
+
+    @Test
+    public void testMatchingParentRegionWithHigherPriorityWins() {
+        // Parent defines BLOCK_BREAK to ALLOW, priority 20
+        Region rParent = new CuboidRegion(
+                RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 20,
+                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.ALLOW)))
+        );
+        // Child defines BLOCK_BREAK to DENY, priority 10
+        Region rChild = new CuboidRegion(
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY))),
+                RegionSubjects.empty(), RegionAccessPolicy.defaults(),
+                Optional.of(RegionId.of("parent"))
+        );
+
+        RegionSet set = RegionSet.of(List.of(rParent, rChild));
+
+        // Query on child pos. Since parent matches and has higher priority, its ALLOW should win.
+        ProtectionDecision decision = resolver.resolve(query, set);
+        assertEquals(DecisionState.ALLOW, decision.state());
+        assertEquals(RegionId.of("parent"), decision.regionId().orElse(null));
+    }
+
+    @Test
+    public void testLowerPriorityGlobalParentDoesNotOverrideHigherPriorityChild() {
+        // Parent is global region with priority 5, ALLOW
+        Region rParent = new dev.sato.worldprotect.protection.region.GlobalRegion(
+                RegionId.of("parent"), overworld, 5,
+                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.ALLOW))),
+                RegionSubjects.empty(), RegionAccessPolicy.defaults(),
+                Optional.empty()
+        );
+        // Child is cuboid with priority 10, DENY, parent = parent
+        Region rChild = new CuboidRegion(
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY))),
+                RegionSubjects.empty(), RegionAccessPolicy.defaults(),
+                Optional.of(RegionId.of("parent"))
+        );
+
+        RegionSet set = RegionSet.of(List.of(rParent, rChild));
+
+        // Query on child pos. Child's priority 10 DENY must win over parent's priority 5 ALLOW.
+        ProtectionDecision decision = resolver.resolve(query, set);
+        assertEquals(DecisionState.DENY, decision.state());
+        assertEquals(RegionId.of("child"), decision.regionId().orElse(null));
+    }
+
+    @Test
+    public void testParentCanStillMakeItsOwnDecisionIfMatchesAsNormalRegion() {
+        // Parent defines BLOCK_BREAK to DENY
+        Region rParent = new CuboidRegion(
+                RegionId.of("parent"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10,
+                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.DENY)))
+        );
+        // Child defines BLOCK_BREAK to ALLOW
+        Region rChild = new CuboidRegion(
+                RegionId.of("child"), overworld, new BlockPosRef(2, 2, 2), new BlockPosRef(8, 8, 8), 10,
+                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRule.simple(FlagState.ALLOW))),
+                RegionSubjects.empty(), RegionAccessPolicy.defaults(),
+                Optional.of(RegionId.of("parent"))
+        );
+
+        RegionSet set = RegionSet.of(List.of(rParent, rChild));
+
+        // Query outside child, but inside parent: e.g. pos = (1, 1, 1)
+        ProtectionQuery outsideQuery = new ProtectionQuery(
+                defaultActor,
+                ProtectionAction.BLOCK_BREAK,
+                CauseChain.of(ProtectionCause.player()),
+                ProtectionTarget.unknown(),
+                overworld,
+                new BlockPosRef(1, 1, 1)
+        );
+
+        // Resolve: parent matches and returns DENY, child does not match.
+        ProtectionDecision decision = resolver.resolve(outsideQuery, set);
+        assertEquals(DecisionState.DENY, decision.state());
+        assertEquals(RegionId.of("parent"), decision.regionId().orElse(null));
     }
 }
