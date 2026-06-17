@@ -22,6 +22,10 @@ public final class SubjectRefConfig {
         return rawValue;
     }
 
+    public String asString() {
+        return rawValue;
+    }
+
     public ConfigValidationResult validate(String path) {
         Objects.requireNonNull(path, "path must not be null");
         ConfigValidationResult result = ConfigValidationResult.ok();

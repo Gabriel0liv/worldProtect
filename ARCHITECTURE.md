@@ -200,8 +200,23 @@ We support a platform-independent region management layer inside `worldprotect-p
 - **Validation Reuse**: Mutations reuse the existing config validation stack (`WorldProtectConfig.validate(...)`, hierarchy validation, flag validation, subject validation, and access-policy validation) after applying changes.
 - **Read Views**: `RegionInfoView` and `RegionListView` provide immutable projections for future command output adapters.
 - **Mutation Plans**: `RegionMutationPlan` captures before/after mutation intent for future previews, audit integration, persistence workflows, and rollback planning without implementing those systems yet.
+- **Result Semantics**: `RegionManagementResult.isSuccess()` returns `true` for both `SUCCESS` and `NO_CHANGE`. Future adapters must not treat `NO_CHANGE` as an error condition.
 - **No Save-Back Yet**: This layer does not save TOML files, watch files, or perform runtime persistence/save-back. That is intentionally a later phase.
 - **No Runtime Side Effects**: This layer does not perform Minecraft enforcement, loader event registration, database logging, rollback, inventory logging, or WorldEdit integration.
+
+## Config Persistence and Save-Back
+
+We support a platform-independent config persistence layer inside `worldprotect-config`.
+
+- **Repository/Store/Writer Split**: `WorldProtectConfigRepository` coordinates load/save/update flows, `ConfigStore` abstracts where TOML text is read/written, and `TomlConfigWriter` serializes immutable configs into canonical TOML.
+- **Persistence Flow**: Save-back follows `load -> mutate -> validate -> serialize -> save`. Command adapters should later call this flow instead of writing files directly.
+- **Canonical TOML Output**: `TomlConfigWriter` emits deterministic TOML accepted by `TomlConfigParser`. Region order follows `WorldProtectConfig.regions()` order; flags and subjects are serialized deterministically.
+- **No Comment Preservation Yet**: The current writer does not preserve original comments, spacing, or formatting. Save-back currently regenerates canonical TOML text, and source-aware/comment-preserving editing remains a future enhancement.
+- **Safe File Writes**: `FileConfigStore` writes through a temporary sibling file and then replaces the target, attempting `ATOMIC_MOVE` first and falling back to a normal replace when atomic move is unsupported.
+- **Operational NO_CHANGE Success**: `ConfigRepositoryResult.isSuccess()` returns `true` for both `SUCCESS` and `NO_CHANGE`. `NO_CHANGE` is operational success and must not trigger error handling in future adapters.
+- **No Live Reload or Watchers**: This layer does not implement file watching, live reload, or runtime synchronization.
+- **No Command Parsing**: This layer does not parse Brigadier or Minecraft command input. Future NeoForge/Fabric command adapters will create management requests and call the repository/service APIs.
+- **No Runtime Side Effects**: Persistence is limited to validated config load/save behavior. It does not register events, enforce Minecraft protections, or perform loader-specific actions.
 
 ## Resource ID Validation Strategy
 

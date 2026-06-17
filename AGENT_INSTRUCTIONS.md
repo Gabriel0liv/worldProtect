@@ -77,6 +77,17 @@ This document lists strict instructions that all future AI agents working on thi
 - **No Runtime Side Effects**: The management layer must not perform Minecraft-side effects, event handling, database writes, or permission plugin lookups.
 - **Adapters Parse, Domain Executes**: Future command adapters should parse raw input and then call typed request objects in the platform-independent management layer.
 
+## Config Persistence / Save-Back Rules
+
+- **Repository Entry Point**: Future command adapters must not write config files directly. Use `WorldProtectConfigRepository` to load, validate, serialize, and save changes.
+- **Immutable Save Flow**: Do not mutate `WorldProtectConfig` or nested config objects in place before saving. Save-back must operate on new immutable instances.
+- **Validation Required Before Write**: Never bypass validation prior to save-back. Invalid updated configs must fail before serialization or file replacement.
+- **Canonical Writer Only**: Do not implement comment-preserving or formatting-preserving save-back unless that work is explicitly requested. The current writer intentionally emits canonical TOML.
+- **No Live Reload Here**: Do not add file watchers, live reload hooks, or runtime sync behavior to the persistence layer.
+- **No Brigadier Here**: Do not mix command parsing or loader command registration into the config persistence package.
+- **NO_CHANGE Is Success**: Treat `NO_CHANGE` as a successful outcome that does not require a write. Future adapters must not report it as an error.
+- **Prefer Safe Writes**: File-backed persistence must prefer atomic/safe replacement behavior through temporary sibling files and replace moves.
+
 ## Permission and Subject Model Rules
 
 - **Platform-Independent Subjects**: All subject modeling (`SubjectRef`, `ActorSubjects`, `RegionSubjects`) and permissions (`PermissionKey`, `PermissionSet`, `ProtectionSubjectContext`) must remain platform-independent. Do not import Fabric, NeoForge, or other platform/mod-specific permission APIs in this layer.
