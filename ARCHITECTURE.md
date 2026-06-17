@@ -103,6 +103,21 @@ The TOML configuration parser is isolated under the `worldprotect-config` module
 - **Loader Decoupling**: No loader APIs or Minecraft runtime dependencies are involved in the parsing process. Platform adapter modules will later utilize this parser to bootstrap region settings.
 
 
+## Config Load Pipeline
+
+The configuration load pipeline is coordinated by the `ConfigLoadService` under the `worldprotect-config` module.
+
+- **Unified Service Entry**: Loaders invoke `ConfigLoadService.load(ConfigSource, ConfigLoadOptions)` to load and compile a region set.
+- **Pipeline Abstractions**:
+  - `ConfigSource` (`StringTomlConfigSource`, `FileTomlConfigSource`): Abstract access to configuration data.
+  - `LoadedWorldProtectConfig`: Holds successfully loaded configurations, including raw structures, mapped `RegionSet`, and non-fatal diagnostics. Rejects inputs containing errors.
+  - `ConfigLoadResult`: Wraps success/failure outcomes and carries validation diagnostics.
+  - `ConfigLoadOptions`: Configures load parameters (e.g. `validateResources` and `failOnWarnings`).
+- **Strict Mode Behavior**: When `failOnWarnings` is active, any warning diagnostic (such as the warning raised when resource validation is requested but no `ResourceRegistryView` is provided) is converted into a fatal error, failing the load operation.
+- **Robust Error Trapping**: The service guarantees no unexpected runtime exceptions are thrown out of the pipeline. All parsing errors, structural validation errors, registry/resource validation errors, and mapper mapping exceptions are caught and wrapped inside a failed `ConfigLoadResult`. Null parameters to constructors/methods still throw standard NullPointerExceptions.
+
+
+
 
 ## Resource ID Validation Strategy
 

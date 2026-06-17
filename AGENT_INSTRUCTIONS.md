@@ -59,6 +59,14 @@ This document lists strict instructions that all future AI agents working on thi
 - **Diagnostics Validation Flow**: TomlConfigParser must return a success result only when there are no ERROR diagnostics. Warnings are allowed to propagate in successful parses.
 - **No Parser Extensions**: Do not add file watchers, hot-reload triggers, or YAML/JSON libraries until explicitly requested.
 
+## Configuration Loading Pipeline Rules
+
+- **Unified Load Entry Point**: Platform loaders must utilize `ConfigLoadService` to perform parsing, validation, and domain mapping. Do not implement file loading sequences or mapper pipelines in the loader/adapter modules.
+- **Strict Mode Enforcement**: Strict options (`ConfigLoadOptions.strict()`) must enforce resource validation (`validateResources = true`) and warning escalation (`failOnWarnings = true`). If a `ResourceRegistryView` is absent when resource validation is requested, the resulting warning must escalate to a fatal error.
+- **Abstract Configuration Sources**: Keep loading input decoupled via `ConfigSource`. `FileTomlConfigSource` and `StringTomlConfigSource` must be used to supply files and test/default configurations respectively.
+- **Robust Exception Trapping**: Ensure `ConfigLoadService.load` traps all parser, structural validation, resource validation, and mapping exceptions, returning them inside `ConfigLoadResult.failure(...)` rather than throwing them to the calling loader. Null parameters to constructors or method calls may still throw.
+
+
 
 
 
