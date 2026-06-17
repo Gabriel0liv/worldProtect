@@ -67,6 +67,16 @@ This document lists strict instructions that all future AI agents working on thi
 - **Abstract Configuration Sources**: Keep loading input decoupled via `ConfigSource`. `FileTomlConfigSource` and `StringTomlConfigSource` must be used to supply files and test/default configurations respectively.
 - **Robust Exception Trapping**: Ensure `ConfigLoadService.load` traps all parser, structural validation, resource validation, and mapping exceptions, returning them inside `ConfigLoadResult.failure(...)` rather than throwing them to the calling loader. Null parameters to constructors or method calls may still throw.
 
+## Region Management Domain Rules
+
+- **No Brigadier Yet**: Do not implement Brigadier commands, command trees, or loader command registration until the platform adapter phase begins.
+- **Immutable Config Mutations**: Region management logic must return new `WorldProtectConfig` / `RegionConfig` instances. Never mutate config objects in place.
+- **No Silent Parent Deletion**: Deleting a parent region must not silently orphan or cascade-delete children. Return a conflict instead.
+- **No Silent Parent Creation**: Region mutation logic must not fabricate missing parent regions.
+- **No Save-Back in Management Service**: `RegionManagementService` must not write TOML files or perform persistence/save-back yet.
+- **No Runtime Side Effects**: The management layer must not perform Minecraft-side effects, event handling, database writes, or permission plugin lookups.
+- **Adapters Parse, Domain Executes**: Future command adapters should parse raw input and then call typed request objects in the platform-independent management layer.
+
 ## Permission and Subject Model Rules
 
 - **Platform-Independent Subjects**: All subject modeling (`SubjectRef`, `ActorSubjects`, `RegionSubjects`) and permissions (`PermissionKey`, `PermissionSet`, `ProtectionSubjectContext`) must remain platform-independent. Do not import Fabric, NeoForge, or other platform/mod-specific permission APIs in this layer.
@@ -107,4 +117,3 @@ This document lists strict instructions that all future AI agents working on thi
 - **Global Regions Excluded from Implicit Build**: `GlobalRegion` instances must never activate implicit membership build protection. Only spatial regions (e.g. `CuboidRegion`) with effective subjects participate in implicit membership.
 - **Implicit Membership Only for Build**: Implicit membership-based protection is build-only. Non-build actions (e.g., `CONTAINER_OPEN`, `ENTITY_DAMAGE`) must never trigger implicit membership protection.
 - **Build Bypass Uses Build Flag Key**: When a non-member is implicitly denied by membership build protection, bypass checks must use `BuiltInFlags.BUILD_KEY` as the flag key for access policy evaluation.
-

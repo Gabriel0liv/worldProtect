@@ -10,6 +10,14 @@ import java.util.Objects;
 public final class BuiltInPermissions {
     public static final PermissionKey GLOBAL_BYPASS = PermissionKey.of("worldprotect.bypass");
     public static final PermissionKey REGION_ADMIN = PermissionKey.of("worldprotect.region.admin");
+    public static final PermissionKey COMMAND_REGION_CREATE = PermissionKey.of("worldprotect.command.region.create");
+    public static final PermissionKey COMMAND_REGION_DELETE = PermissionKey.of("worldprotect.command.region.delete");
+    public static final PermissionKey COMMAND_REGION_FLAG = PermissionKey.of("worldprotect.command.region.flag");
+    public static final PermissionKey COMMAND_REGION_PARENT = PermissionKey.of("worldprotect.command.region.parent");
+    public static final PermissionKey COMMAND_REGION_SUBJECT = PermissionKey.of("worldprotect.command.region.subject");
+    public static final PermissionKey COMMAND_REGION_INFO = PermissionKey.of("worldprotect.command.region.info");
+    public static final PermissionKey COMMAND_REGION_LIST = PermissionKey.of("worldprotect.command.region.list");
+    public static final PermissionKey COMMAND_REGION_ADMIN = PermissionKey.of("worldprotect.command.region.admin");
 
     private BuiltInPermissions() {
         // Utility constructor

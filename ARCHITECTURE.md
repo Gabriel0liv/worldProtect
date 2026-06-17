@@ -190,6 +190,19 @@ The configuration load pipeline is coordinated by the `ConfigLoadService` under 
 
 
 
+## Region Management Domain
+
+We support a platform-independent region management layer inside `worldprotect-protection`.
+
+- **Domain-Level Management Only**: `RegionManagementService` models command intent and config mutations in pure Java. It does not parse Brigadier/Minecraft command input itself.
+- **Immutable Mutation Flow**: Region create/delete/update operations never mutate `WorldProtectConfig` or `RegionConfig` instances in place. Each operation returns a new immutable `WorldProtectConfig`.
+- **Adapter Boundary**: Future NeoForge/Fabric command adapters will parse `/wp region ...` input and translate it into typed request objects for this service.
+- **Validation Reuse**: Mutations reuse the existing config validation stack (`WorldProtectConfig.validate(...)`, hierarchy validation, flag validation, subject validation, and access-policy validation) after applying changes.
+- **Read Views**: `RegionInfoView` and `RegionListView` provide immutable projections for future command output adapters.
+- **Mutation Plans**: `RegionMutationPlan` captures before/after mutation intent for future previews, audit integration, persistence workflows, and rollback planning without implementing those systems yet.
+- **No Save-Back Yet**: This layer does not save TOML files, watch files, or perform runtime persistence/save-back. That is intentionally a later phase.
+- **No Runtime Side Effects**: This layer does not perform Minecraft enforcement, loader event registration, database logging, rollback, inventory logging, or WorldEdit integration.
+
 ## Resource ID Validation Strategy
 
 We employ a strict two-layered validation process for all Minecraft identifiers and resource keys:

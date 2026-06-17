@@ -180,6 +180,30 @@ public final class RegionConfig {
         return result;
     }
 
+    public RegionConfig withBounds(BoundsConfig bounds) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
+    }
+
+    public RegionConfig withPriority(int priority) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
+    }
+
+    public RegionConfig withParentId(Optional<RegionId> parentId) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
+    }
+
+    public RegionConfig withFlags(Map<FlagKey, FlagRuleConfig> flags) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
+    }
+
+    public RegionConfig withSubjectsConfig(RegionSubjectsConfig subjectsConfig) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
+    }
+
+    public RegionConfig withAccessPolicyConfig(RegionAccessPolicyConfig accessPolicyConfig) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

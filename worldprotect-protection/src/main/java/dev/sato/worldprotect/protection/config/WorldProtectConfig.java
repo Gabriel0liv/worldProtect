@@ -26,6 +26,10 @@ public final class WorldProtectConfig {
         return new WorldProtectConfig(regions);
     }
 
+    public WorldProtectConfig withRegions(Collection<RegionConfig> regions) {
+        return new WorldProtectConfig(regions);
+    }
+
     public List<RegionConfig> regions() {
         return regions;
     }
