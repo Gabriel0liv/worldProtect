@@ -98,4 +98,13 @@ This document lists strict instructions that all future AI agents working on thi
 - **Local Access Policies & Bypass**: The `RegionAccessPolicy` remains strictly local. Flag-specific or role-based bypass permissions (`owners-bypass`, `members-bypass`) must be resolved only against the matched region's ID and its local policy. Do not allow parent-level access policies or parent bypass permissions to override child decisions.
 
 
+## Build and Passthrough Semantic Rules
+
+- **Three-Step Resolution Order**: Build-related actions must always resolve through `BuildDecisionResolver` in strict order: (1) action-specific flags, (2) explicit `build` fallback, (3) implicit membership build. Do not collapse or reorder these steps.
+- **No Build-Key Duplication in ActionFlagMapper**: `ActionFlagMapper` must NOT include `BUILD_KEY` in the mapping for `BLOCK_BREAK`, `BLOCK_PLACE`, or `BLOCK_MODIFY`. The build fallback chain is managed exclusively by `BuildDecisionResolver`.
+- **Passthrough Does Not Skip Specific Flags**: Passthrough (`passthrough = allow`) only skips build fallback (step 2) and implicit membership (step 3). It must NEVER skip action-specific flags (step 1).
+- **Passthrough Does Not Deny or Allow**: Passthrough controls participation in build fallback/implicit membership. It must not directly produce DENY or ALLOW decisions for any action.
+- **Global Regions Excluded from Implicit Build**: `GlobalRegion` instances must never activate implicit membership build protection. Only spatial regions (e.g. `CuboidRegion`) with effective subjects participate in implicit membership.
+- **Implicit Membership Only for Build**: Implicit membership-based protection is build-only. Non-build actions (e.g., `CONTAINER_OPEN`, `ENTITY_DAMAGE`) must never trigger implicit membership protection.
+- **Build Bypass Uses Build Flag Key**: When a non-member is implicitly denied by membership build protection, bypass checks must use `BuiltInFlags.BUILD_KEY` as the flag key for access policy evaluation.
 

@@ -6,6 +6,10 @@ import java.util.Objects;
 
 /**
  * Maps ProtectionAction to one or more relevant FlagKey values, ordered from most specific to most generic.
+ *
+ * <p>For build-related actions (BLOCK_BREAK, BLOCK_PLACE, BLOCK_MODIFY), only the action-specific
+ * flag is returned. The build fallback chain (build flag, passthrough, implicit membership) is
+ * handled separately by {@code BuildDecisionResolver}.</p>
  */
 public final class ActionFlagMapper {
 
@@ -15,11 +19,11 @@ public final class ActionFlagMapper {
             case BUILD:
                 return List.of(BuiltInFlags.BUILD_KEY);
             case BLOCK_BREAK:
-                return List.of(BuiltInFlags.BREAK_BLOCK_KEY, BuiltInFlags.BUILD_KEY);
+                return List.of(BuiltInFlags.BREAK_BLOCK_KEY);
             case BLOCK_PLACE:
-                return List.of(BuiltInFlags.PLACE_BLOCK_KEY, BuiltInFlags.BUILD_KEY);
+                return List.of(BuiltInFlags.PLACE_BLOCK_KEY);
             case BLOCK_MODIFY:
-                return List.of(BuiltInFlags.MODIFY_BLOCK_KEY, BuiltInFlags.BUILD_KEY);
+                return List.of(BuiltInFlags.MODIFY_BLOCK_KEY);
             case BLOCK_INTERACT:
                 return List.of(BuiltInFlags.INTERACT_BLOCK_KEY);
             case ITEM_USE:

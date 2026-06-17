@@ -52,6 +52,11 @@ public final class ProtectionResolver {
 
         RegionInheritanceResolver inheritanceResolver = new RegionInheritanceResolver(regionSet);
 
+        // Delegate build-related actions to the specialized BuildDecisionResolver
+        if (BuildSemantics.isBuildRelated(query.getAction())) {
+            return BuildDecisionResolver.resolve(query, regionSet, subjectContext, matched, inheritanceResolver);
+        }
+
         // Group matched regions by priority descending (since matched is already sorted by priority desc)
         List<List<Region>> priorityGroups = new ArrayList<>();
         List<Region> currentGroup = new ArrayList<>();

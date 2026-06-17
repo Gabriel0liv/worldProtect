@@ -133,6 +133,21 @@ We support scoping flag rules to specific region groups based on the actor's mem
 - **Bypass & Access Policies**: The region access policy remains strictly local to the matched region. Bypass permissions (owner/member) are checked against the matched region's ID and access policy.
 
 
+## Build and Passthrough Semantics
+
+Build-related actions (`BLOCK_BREAK`, `BLOCK_PLACE`, `BLOCK_MODIFY`, and the generic `BUILD`) follow a specialized three-step resolution order managed by `BuildDecisionResolver`:
+
+1. **Specific Flags (Step 1)**: Action-specific flags are evaluated first (e.g., `break-block` for `BLOCK_BREAK`). These follow standard priority grouping and flag resolution. Passthrough does **NOT** skip specific flags.
+2. **Explicit Build Fallback (Step 2)**: The generic `build` flag is evaluated. If a region has `passthrough = allow`, that region is skipped for this step. Same-priority deny beats allow.
+3. **Implicit Membership Build (Step 3)**: Membership-based implicit protection activates only for spatial (non-global) regions that have effective subjects and no `passthrough = allow`. Owner and member actors get implicit `ALLOW`; non-members get implicit `DENY` (with access policy bypass checks using the `build` flag key).
+
+### Key Rules
+- **Passthrough Controls Participation**: The `passthrough` flag controls whether a region participates in build fallback (step 2) and implicit membership protection (step 3). It does NOT directly deny or allow actions.
+- **Global Regions Excluded from Implicit Build**: `GlobalRegion` instances never activate implicit membership build protection. To protect an entire dimension, the config must explicitly set `build = "deny"` or other protection flags.
+- **Non-Build Actions Unaffected**: Passthrough and implicit membership only affect build-related actions. Non-build actions (e.g., `CONTAINER_OPEN`, `ENTITY_DAMAGE`) follow the standard `ActionFlagMapper` resolution.
+- **ActionFlagMapper Isolated**: For build-related actions, `ActionFlagMapper` only returns the action-specific flag (not `build`). The build fallback chain is handled entirely by `BuildDecisionResolver`.
+
+
 ## In-Memory Configuration Model
 
 We represent the plugin configuration in memory using a platform-independent model that mirrors the logical structure of a future persistent file layout (e.g. YAML/TOML/JSON).

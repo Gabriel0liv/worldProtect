@@ -27,6 +27,7 @@ public final class BuiltInFlags {
     public static final FlagKey FLUID_SPREAD_KEY = FlagKey.of("fluid-spread");
     public static final FlagKey PISTON_MOVE_KEY = FlagKey.of("piston-move");
     public static final FlagKey WORLD_MODIFY_KEY = FlagKey.of("world-modify");
+    public static final FlagKey PASSTHROUGH_KEY = FlagKey.of("passthrough");
 
     public static final FlagDefinition BUILD = FlagDefinition.of(BUILD_KEY, "Fallback flag for building or modifying the world", FlagState.PASS);
     public static final FlagDefinition BREAK_BLOCK = FlagDefinition.of(BREAK_BLOCK_KEY, "Permission to break blocks", FlagState.PASS);
@@ -49,13 +50,15 @@ public final class BuiltInFlags {
     public static final FlagDefinition FLUID_SPREAD = FlagDefinition.of(FLUID_SPREAD_KEY, "Whether fluids are allowed to flow/spread", FlagState.PASS);
     public static final FlagDefinition PISTON_MOVE = FlagDefinition.of(PISTON_MOVE_KEY, "Whether pistons/contraptions are allowed to move blocks", FlagState.PASS);
     public static final FlagDefinition WORLD_MODIFY = FlagDefinition.of(WORLD_MODIFY_KEY, "Permission to modify the world generally via machines", FlagState.PASS);
+    public static final FlagDefinition PASSTHROUGH = FlagDefinition.of(PASSTHROUGH_KEY, "Controls whether a region participates in implicit/fallback build protection", FlagState.PASS);
 
     public static final List<FlagDefinition> ALL = List.of(
         BUILD, BREAK_BLOCK, PLACE_BLOCK, MODIFY_BLOCK, INTERACT_BLOCK,
         USE_ITEM, USE_ITEM_ON_BLOCK, USE_ITEM_ON_ENTITY, OPEN_CONTAINER,
         INVENTORY_INSERT, INVENTORY_EXTRACT, DAMAGE_ENTITY, SPAWN_ENTITY,
         EXPLOSION_BREAK_BLOCKS, EXPLOSION_DAMAGE_ENTITIES, EXPLOSION_DROP_ITEMS,
-        BLOCK_DROPS, ENTITY_DROPS, FLUID_SPREAD, PISTON_MOVE, WORLD_MODIFY
+        BLOCK_DROPS, ENTITY_DROPS, FLUID_SPREAD, PISTON_MOVE, WORLD_MODIFY,
+        PASSTHROUGH
     );
 
     private BuiltInFlags() {}

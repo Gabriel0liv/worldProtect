@@ -67,7 +67,7 @@ public final class ProtectionResolverTest {
         ProtectionDecision decision = resolver.resolve(query, set);
 
         assertTrue(decision.isPass());
-        assertTrue(decision.reason().contains("No explicit flags matched"));
+        assertTrue(decision.reason().contains("No build protection matched") || decision.reason().contains("No explicit flags matched"));
     }
 
     // 3. break block denied by break-block

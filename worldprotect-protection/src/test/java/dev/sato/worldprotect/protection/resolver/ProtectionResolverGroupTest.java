@@ -33,6 +33,11 @@ import java.util.Set;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for RegionGroup-scoped flag rules resolved through ProtectionResolver.
+ * Uses non-build-related actions (BLOCK_INTERACT -> interact-block) to isolate
+ * group scoping behavior from build/passthrough semantics.
+ */
 public final class ProtectionResolverGroupTest {
 
     private DimensionRef overworld;
@@ -61,25 +66,20 @@ public final class ProtectionResolverGroupTest {
 
     @Test
     public void testOwnersGroupDeniesNonOwners() {
-        // OWNERS only -> deny break block
+        // OWNERS only -> deny interact-block (non-build action to isolate group scoping)
         FlagRule rule = FlagRule.simple(FlagState.DENY, RegionGroup.OWNERS);
         RegionSubjects subjects = RegionSubjects.of(Set.of(SubjectRef.player(playerUuid)), Set.of()); // owner is playerUuid
         
-        Region r = new CuboidRegion(RegionId.of("spawn"), overworld, min, max, 100, RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, rule)), subjects, RegionAccessPolicy.defaults(), Optional.empty());
-        RegionSet set = RegionSet.of(List.of(r));
-        
         ProtectionResolver resolver = new ProtectionResolver();
-        ProtectionQuery query = new ProtectionQuery(actor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
 
-        // Scenario 1: Actor is owner. But wait! Owner bypass is true by default in RegionAccessPolicy.
-        // Let's create custom access policy with ownerBypass = false so the DENY flag rule is evaluated for the owner
+        // With ownerBypass = false so the DENY flag rule is evaluated for the owner
         Region rNoBypass = new CuboidRegion(
                 RegionId.of("spawn"),
                 overworld,
                 min,
                 max,
                 100,
-                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, rule)),
+                RegionFlags.ofRules(Map.of(BuiltInFlags.INTERACT_BLOCK_KEY, rule)),
                 subjects,
                 RegionAccessPolicy.of(false, false, Set.of(), Set.of()),
                 Optional.empty()
@@ -87,12 +87,13 @@ public final class ProtectionResolverGroupTest {
         RegionSet setNoBypass = RegionSet.of(List.of(rNoBypass));
 
         // When actor is owner, flag matches because they are OWNER, so it is DENIED
+        ProtectionQuery query = new ProtectionQuery(actor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
         assertTrue(resolver.resolve(query, setNoBypass, createContext(playerUuid)).isDenied());
 
         // Scenario 2: Actor is not owner (other player uuid)
         UUID otherUuid = UUID.randomUUID();
         Actor otherActor = new Actor(otherUuid.toString(), ActorType.PLAYER);
-        ProtectionQuery otherQuery = new ProtectionQuery(otherActor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
+        ProtectionQuery otherQuery = new ProtectionQuery(otherActor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
         ActorSubjects otherSubjects = ActorSubjects.player(otherActor, otherUuid, List.of());
         ProtectionSubjectContext otherContext = ProtectionSubjectContext.withoutPermissions(otherSubjects);
 
@@ -102,7 +103,7 @@ public final class ProtectionResolverGroupTest {
 
     @Test
     public void testMembersGroupMatchesOwnersAndMembers() {
-        // MEMBERS group -> deny
+        // MEMBERS group -> deny interact-block
         FlagRule rule = FlagRule.simple(FlagState.DENY, RegionGroup.MEMBERS);
         
         // playerUuid is member, otherUuid is owner
@@ -115,7 +116,7 @@ public final class ProtectionResolverGroupTest {
                 min,
                 max,
                 100,
-                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, rule)),
+                RegionFlags.ofRules(Map.of(BuiltInFlags.INTERACT_BLOCK_KEY, rule)),
                 subjects,
                 RegionAccessPolicy.of(false, false, Set.of(), Set.of()),
                 Optional.empty()
@@ -123,14 +124,14 @@ public final class ProtectionResolverGroupTest {
         RegionSet set = RegionSet.of(List.of(r));
 
         ProtectionResolver resolver = new ProtectionResolver();
-        ProtectionQuery query = new ProtectionQuery(actor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
+        ProtectionQuery query = new ProtectionQuery(actor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
 
         // playerUuid is member -> matches MEMBERS -> DENIED
         assertTrue(resolver.resolve(query, set, createContext(playerUuid)).isDenied());
 
         // otherUuid is owner -> matches MEMBERS -> DENIED
         Actor ownerActor = new Actor(ownerUuid.toString(), ActorType.PLAYER);
-        ProtectionQuery ownerQuery = new ProtectionQuery(ownerActor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
+        ProtectionQuery ownerQuery = new ProtectionQuery(ownerActor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
         ActorSubjects ownerSubjects = ActorSubjects.player(ownerActor, ownerUuid, List.of());
         ProtectionSubjectContext ownerContext = ProtectionSubjectContext.withoutPermissions(ownerSubjects);
         assertTrue(resolver.resolve(ownerQuery, set, ownerContext).isDenied());
@@ -138,7 +139,7 @@ public final class ProtectionResolverGroupTest {
         // non-member -> does not match MEMBERS -> PASS
         UUID nonUuid = UUID.randomUUID();
         Actor nonActor = new Actor(nonUuid.toString(), ActorType.PLAYER);
-        ProtectionQuery nonQuery = new ProtectionQuery(nonActor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
+        ProtectionQuery nonQuery = new ProtectionQuery(nonActor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
         ActorSubjects nonSubjects = ActorSubjects.player(nonActor, nonUuid, List.of());
         ProtectionSubjectContext nonContext = ProtectionSubjectContext.withoutPermissions(nonSubjects);
         assertTrue(resolver.resolve(nonQuery, set, nonContext).isPass());
@@ -146,7 +147,7 @@ public final class ProtectionResolverGroupTest {
 
     @Test
     public void testNonMembersGroupOnlyMatchesNone() {
-        // NONMEMBERS group -> deny
+        // NONMEMBERS group -> deny interact-block
         FlagRule rule = FlagRule.simple(FlagState.DENY, RegionGroup.NONMEMBERS);
         RegionSubjects subjects = RegionSubjects.of(Set.of(), Set.of(SubjectRef.player(playerUuid))); // playerUuid is member
 
@@ -156,7 +157,7 @@ public final class ProtectionResolverGroupTest {
                 min,
                 max,
                 100,
-                RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, rule)),
+                RegionFlags.ofRules(Map.of(BuiltInFlags.INTERACT_BLOCK_KEY, rule)),
                 subjects,
                 RegionAccessPolicy.of(false, false, Set.of(), Set.of()),
                 Optional.empty()
@@ -164,7 +165,7 @@ public final class ProtectionResolverGroupTest {
         RegionSet set = RegionSet.of(List.of(r));
 
         ProtectionResolver resolver = new ProtectionResolver();
-        ProtectionQuery query = new ProtectionQuery(actor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
+        ProtectionQuery query = new ProtectionQuery(actor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
 
         // playerUuid is member -> does not match NONMEMBERS -> PASS
         assertTrue(resolver.resolve(query, set, createContext(playerUuid)).isPass());
@@ -172,7 +173,7 @@ public final class ProtectionResolverGroupTest {
         // non-member UUID -> matches NONMEMBERS -> DENIED
         UUID nonUuid = UUID.randomUUID();
         Actor nonActor = new Actor(nonUuid.toString(), ActorType.PLAYER);
-        ProtectionQuery nonQuery = new ProtectionQuery(nonActor, ProtectionAction.BLOCK_BREAK, causeChain, ProtectionTarget.unknown(), overworld, pos);
+        ProtectionQuery nonQuery = new ProtectionQuery(nonActor, ProtectionAction.BLOCK_INTERACT, causeChain, ProtectionTarget.unknown(), overworld, pos);
         ActorSubjects nonSubjects = ActorSubjects.player(nonActor, nonUuid, List.of());
         ProtectionSubjectContext nonContext = ProtectionSubjectContext.withoutPermissions(nonSubjects);
         assertTrue(resolver.resolve(nonQuery, set, nonContext).isDenied());

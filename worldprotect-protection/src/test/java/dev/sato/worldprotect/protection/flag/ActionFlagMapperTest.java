@@ -10,17 +10,15 @@ public final class ActionFlagMapperTest {
     @Test
     public void testBlockBreakMapping() {
         List<FlagKey> flags = ActionFlagMapper.mapAction(ProtectionAction.BLOCK_BREAK);
-        assertEquals(2, flags.size());
+        assertEquals(1, flags.size());
         assertEquals(BuiltInFlags.BREAK_BLOCK_KEY, flags.get(0));
-        assertEquals(BuiltInFlags.BUILD_KEY, flags.get(1));
     }
 
     @Test
     public void testBlockPlaceMapping() {
         List<FlagKey> flags = ActionFlagMapper.mapAction(ProtectionAction.BLOCK_PLACE);
-        assertEquals(2, flags.size());
+        assertEquals(1, flags.size());
         assertEquals(BuiltInFlags.PLACE_BLOCK_KEY, flags.get(0));
-        assertEquals(BuiltInFlags.BUILD_KEY, flags.get(1));
     }
 
     @Test
