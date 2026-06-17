@@ -1,7 +1,6 @@
 package dev.sato.worldprotect.protection.config;
 
 import dev.sato.worldprotect.protection.subject.SubjectRef;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 

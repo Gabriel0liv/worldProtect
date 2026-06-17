@@ -2,7 +2,6 @@ package dev.sato.worldprotect.protection.config;
 
 import dev.sato.worldprotect.protection.subject.RegionSubjects;
 import dev.sato.worldprotect.protection.subject.SubjectRef;
-import dev.sato.worldprotect.protection.subject.SubjectType;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;

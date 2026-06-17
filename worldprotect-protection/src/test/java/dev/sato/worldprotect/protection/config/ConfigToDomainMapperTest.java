@@ -9,7 +9,6 @@ import dev.sato.worldprotect.protection.flag.BuiltInFlags;
 import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagState;
 import dev.sato.worldprotect.protection.region.CuboidRegion;
-import dev.sato.worldprotect.protection.region.RegionFlags;
 import dev.sato.worldprotect.protection.region.RegionId;
 import dev.sato.worldprotect.protection.region.RegionSet;
 import dev.sato.worldprotect.protection.rule.FlagRule;

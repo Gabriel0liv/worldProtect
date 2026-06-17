@@ -111,6 +111,9 @@ public final class QueryResourceExtractor {
                 }
                 break;
 
+            case BUILD:
+                return Optional.empty();
+
             case WORLD_MODIFY:
                 if (query.getTarget().id().isPresent()) {
                     return query.getTarget().id();
