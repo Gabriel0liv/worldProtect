@@ -2,6 +2,7 @@ package dev.sato.worldprotect.protection.config;
 
 import dev.sato.worldprotect.protection.flag.FlagState;
 import dev.sato.worldprotect.protection.rule.ResourceSelector;
+import dev.sato.worldprotect.protection.subject.RegionGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -14,11 +15,13 @@ public final class FlagRuleConfig {
     private final List<String> allowSelectors;
     private final List<String> denySelectors;
     private final boolean simple;
+    private final RegionGroup group;
 
-    private FlagRuleConfig(FlagState defaultState, List<String> allowSelectors, List<String> denySelectors, boolean simple) {
+    private FlagRuleConfig(FlagState defaultState, List<String> allowSelectors, List<String> denySelectors, boolean simple, RegionGroup group) {
         this.defaultState = Objects.requireNonNull(defaultState, "defaultState must not be null");
         Objects.requireNonNull(allowSelectors, "allowSelectors must not be null");
         Objects.requireNonNull(denySelectors, "denySelectors must not be null");
+        this.group = Objects.requireNonNull(group, "group must not be null");
         
         for (String s : allowSelectors) {
             Objects.requireNonNull(s, "allow selector must not be null");
@@ -40,11 +43,24 @@ public final class FlagRuleConfig {
 
     public static FlagRuleConfig simple(FlagState state) {
         Objects.requireNonNull(state, "state must not be null");
-        return new FlagRuleConfig(state, List.of(), List.of(), true);
+        return new FlagRuleConfig(state, List.of(), List.of(), true, RegionGroup.ALL);
+    }
+
+    public static FlagRuleConfig simple(FlagState state, RegionGroup group) {
+        Objects.requireNonNull(state, "state must not be null");
+        Objects.requireNonNull(group, "group must not be null");
+        return new FlagRuleConfig(state, List.of(), List.of(), true, group);
     }
 
     public static FlagRuleConfig conditional(FlagState defaultState, List<String> allowSelectors, List<String> denySelectors) {
-        return new FlagRuleConfig(defaultState, allowSelectors, denySelectors, false);
+        return new FlagRuleConfig(defaultState, allowSelectors, denySelectors, false, RegionGroup.ALL);
+    }
+
+    public static FlagRuleConfig conditional(FlagState defaultState, java.util.Collection<String> allowSelectors, java.util.Collection<String> denySelectors, RegionGroup group) {
+        Objects.requireNonNull(allowSelectors, "allowSelectors must not be null");
+        Objects.requireNonNull(denySelectors, "denySelectors must not be null");
+        Objects.requireNonNull(group, "group must not be null");
+        return new FlagRuleConfig(defaultState, List.copyOf(allowSelectors), List.copyOf(denySelectors), false, group);
     }
 
     public FlagState defaultState() {
@@ -61,6 +77,14 @@ public final class FlagRuleConfig {
 
     public boolean isSimple() {
         return simple;
+    }
+
+    public RegionGroup group() {
+        return group;
+    }
+
+    public RegionGroup getGroup() {
+        return group;
     }
 
     public FlagState getDefaultState() {
@@ -108,19 +132,20 @@ public final class FlagRuleConfig {
         return simple == that.simple &&
                defaultState == that.defaultState &&
                allowSelectors.equals(that.allowSelectors) &&
-               denySelectors.equals(that.denySelectors);
+               denySelectors.equals(that.denySelectors) &&
+               group == that.group;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(defaultState, allowSelectors, denySelectors, simple);
+        return Objects.hash(defaultState, allowSelectors, denySelectors, simple, group);
     }
 
     @Override
     public String toString() {
         if (simple) {
-            return "FlagRuleConfig{simple=" + defaultState + "}";
+            return "FlagRuleConfig{simple=" + defaultState + ", group=" + group + "}";
         }
-        return "FlagRuleConfig{default=" + defaultState + ", allow=" + allowSelectors + ", deny=" + denySelectors + "}";
+        return "FlagRuleConfig{default=" + defaultState + ", allow=" + allowSelectors + ", deny=" + denySelectors + ", group=" + group + "}";
     }
 }

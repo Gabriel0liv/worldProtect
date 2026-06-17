@@ -97,7 +97,13 @@ public final class ProtectionResolver {
                         continue;
                     }
 
-                    Optional<FlagRule> ruleOpt = inheritanceResolver.effectiveFlagRule(region, flagKey);
+                    dev.sato.worldprotect.protection.subject.RegionRole role = dev.sato.worldprotect.protection.subject.RegionRole.NONE;
+                    if (subjectContext != null) {
+                        dev.sato.worldprotect.protection.subject.RegionSubjects effectiveSubjects = inheritanceResolver.effectiveSubjects(region);
+                        role = dev.sato.worldprotect.protection.subject.SubjectResolver.roleInRegion(subjectContext, effectiveSubjects);
+                    }
+
+                    Optional<FlagRule> ruleOpt = inheritanceResolver.effectiveFlagRule(region, flagKey, role);
                     if (ruleOpt.isPresent()) {
                         FlagRule rule = ruleOpt.get();
                         FlagRuleEvaluation evaluation = rule.evaluate(resource);
@@ -111,8 +117,6 @@ public final class ProtectionResolver {
                         if (resolvedState == FlagState.DENY) {
                             boolean bypassed = false;
                             if (subjectContext != null) {
-                                dev.sato.worldprotect.protection.subject.RegionSubjects effectiveSubjects = inheritanceResolver.effectiveSubjects(region);
-                                dev.sato.worldprotect.protection.subject.RegionRole role = dev.sato.worldprotect.protection.subject.SubjectResolver.roleInRegion(subjectContext, effectiveSubjects);
                                 boolean isOwnerRoleBypass = role == dev.sato.worldprotect.protection.subject.RegionRole.OWNER && region.accessPolicy().ownerBypasses(flagKey);
                                 boolean isMemberRoleBypass = role == dev.sato.worldprotect.protection.subject.RegionRole.MEMBER && region.accessPolicy().memberBypasses(flagKey);
 

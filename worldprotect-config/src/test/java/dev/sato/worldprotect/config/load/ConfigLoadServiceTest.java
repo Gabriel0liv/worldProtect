@@ -9,6 +9,7 @@ import dev.sato.worldprotect.protection.config.ConfigResourceValidator;
 import dev.sato.worldprotect.protection.config.ConfigToDomainMapper;
 import dev.sato.worldprotect.protection.config.ConfigValidationResult;
 import dev.sato.worldprotect.protection.config.FlagRuleConfig;
+import dev.sato.worldprotect.protection.rule.FlagRule;
 import dev.sato.worldprotect.protection.config.WorldProtectConfig;
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
 import dev.sato.worldprotect.protection.flag.FlagKey;
@@ -545,5 +546,35 @@ public final class ConfigLoadServiceTest {
         assertTrue(result.hasErrors());
         assertTrue(result.diagnostics().messages().stream()
                 .anyMatch(msg -> msg.path().startsWith("regions.") && msg.message().contains("Circular inheritance")));
+    }
+
+    @Test
+    public void testLoadConfigWithScopedGroups() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n" +
+                "[regions.spawn.flags.break-block]\n" +
+                "state = \"deny\"\n" +
+                "group = \"members\"\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.hasErrors());
+        assertTrue(result.loadedConfig().isPresent());
+
+        LoadedWorldProtectConfig loaded = result.loadedConfig().get();
+        assertEquals(1, loaded.regionSet().regions().size());
+        dev.sato.worldprotect.protection.region.Region region = loaded.regionSet().regions().get(0);
+        
+        Optional<FlagRule> ruleOpt = region.flags().rule(BuiltInFlags.BREAK_BLOCK_KEY);
+        assertTrue(ruleOpt.isPresent());
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS, ruleOpt.get().group());
     }
 }

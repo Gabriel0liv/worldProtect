@@ -6,6 +6,8 @@ import dev.sato.worldprotect.minecraft.BlockPosRef;
 import dev.sato.worldprotect.minecraft.DimensionRef;
 import dev.sato.worldprotect.minecraft.ResourceRef;
 import dev.sato.worldprotect.protection.config.ConfigToDomainMapper;
+import dev.sato.worldprotect.protection.config.RegionConfig;
+import dev.sato.worldprotect.protection.config.FlagRuleConfig;
 import dev.sato.worldprotect.protection.config.ConfigValidationResult;
 import dev.sato.worldprotect.protection.config.WorldProtectConfig;
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
@@ -735,5 +737,98 @@ public final class TomlConfigParserTest {
         assertTrue(result.hasErrors());
         assertEquals("regions.child.parent", result.diagnostics().errors().get(0).path());
         assertTrue(result.diagnostics().errors().get(0).message().contains("Invalid parent region ID"));
+    }
+
+    @Test
+    public void testParsesFlagRuleGroupSuccessfully() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.flags.break-block]\n" +
+                "state = \"deny\"\n" +
+                "group = \"members\"\n" +
+                "[regions.spawn.flags.use-item]\n" +
+                "default = \"deny\"\n" +
+                "allow = [\"create:wrench\"]\n" +
+                "group = \"owners\"\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+        WorldProtectConfig config = result.config().get();
+        assertEquals(1, config.regions().size());
+        RegionConfig region = config.regions().get(0);
+        
+        FlagRuleConfig breakBlock = region.flags().get(BuiltInFlags.BREAK_BLOCK_KEY);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS, breakBlock.group());
+        
+        FlagRuleConfig useItem = region.flags().get(BuiltInFlags.USE_ITEM_KEY);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS, useItem.group());
+    }
+
+    @Test
+    public void testFlagRuleInvalidGroupFails() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.flags.break-block]\n" +
+                "state = \"deny\"\n" +
+                "group = \"invalid-group\"\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertEquals("regions.spawn.flags.break-block.group", result.diagnostics().errors().get(0).path());
+    }
+
+    @Test
+    public void testFlagRuleStateAndDefaultExclusivityFails() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.flags.break-block]\n" +
+                "state = \"deny\"\n" +
+                "default = \"allow\"\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertEquals("regions.spawn.flags.break-block", result.diagnostics().errors().get(0).path());
+        assertTrue(result.diagnostics().errors().get(0).message().contains("Flag rule must not define both state and default"));
+    }
+
+    @Test
+    public void testFlagRuleSimpleStateWithSelectorsFails() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.flags.break-block]\n" +
+                "state = \"deny\"\n" +
+                "allow = [\"minecraft:stone\"]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertEquals("regions.spawn.flags.break-block", result.diagnostics().errors().get(0).path());
+        assertTrue(result.diagnostics().errors().get(0).message().contains("allow and deny selector arrays must not be present when state is defined"));
     }
 }

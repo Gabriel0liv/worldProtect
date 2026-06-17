@@ -74,7 +74,7 @@ public final class ConfigToDomainMapper {
     public FlagRule toFlagRule(FlagRuleConfig config) {
         Objects.requireNonNull(config, "config must not be null");
         if (config.isSimple()) {
-            return FlagRule.simple(config.defaultState());
+            return FlagRule.simple(config.defaultState(), config.group());
         }
 
         List<ResourceSelector> allow = config.allowSelectors().stream()
@@ -88,7 +88,8 @@ public final class ConfigToDomainMapper {
         return FlagRule.conditional(
                 config.defaultState(),
                 ResourceSelectorSet.of(allow),
-                ResourceSelectorSet.of(deny)
+                ResourceSelectorSet.of(deny),
+                config.group()
         );
     }
 }

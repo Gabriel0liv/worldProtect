@@ -212,4 +212,20 @@ public final class ConfigToDomainMapperTest {
         assertEquals(-5, region.getPriority());
         assertEquals(FlagState.DENY, region.flags().get(BuiltInFlags.BREAK_BLOCK_KEY).orElse(null));
     }
+
+    @Test
+    public void testMapsFlagRuleConfigWithRegionGroup() {
+        FlagRuleConfig config = FlagRuleConfig.simple(FlagState.ALLOW, dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS);
+        FlagRule rule = mapper.toFlagRule(config);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS, rule.group());
+
+        FlagRuleConfig condConfig = FlagRuleConfig.conditional(
+                FlagState.DENY,
+                List.of("create:wrench"),
+                List.of(),
+                dev.sato.worldprotect.protection.subject.RegionGroup.NONMEMBERS
+        );
+        FlagRule condRule = mapper.toFlagRule(condConfig);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.NONMEMBERS, condRule.group());
+    }
 }

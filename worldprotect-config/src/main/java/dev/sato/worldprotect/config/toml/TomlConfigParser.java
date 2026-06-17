@@ -197,75 +197,139 @@ public final class TomlConfigParser {
                         }
                         flagsMap.put(flagKey, FlagRuleConfig.simple(state));
                     } else if (flagValObj instanceof TomlTable) {
-                        TomlTable condTable = (TomlTable) flagValObj;
-                        String defStr = condTable.getString("default");
-                        if (defStr == null) {
-                            diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".default", "Missing default state in conditional flag rule"));
+                        TomlTable flagTable = (TomlTable) flagValObj;
+                        String path = "regions." + regionKey + ".flags." + flagKeyStr;
+
+                        // 1. Group validation
+                        dev.sato.worldprotect.protection.subject.RegionGroup group = dev.sato.worldprotect.protection.subject.RegionGroup.ALL;
+                        if (flagTable.contains("group")) {
+                            Object groupVal = flagTable.get("group");
+                            if (!(groupVal instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".group", "group must be a string"));
+                                regionValid = false;
+                                continue;
+                            }
+                            String groupStr = (String) groupVal;
+                            try {
+                                group = dev.sato.worldprotect.protection.subject.RegionGroup.parse(groupStr);
+                            } catch (Exception e) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".group", "Invalid region group: " + groupStr));
+                                regionValid = false;
+                                continue;
+                            }
+                        }
+
+                        // 2. Mutual exclusivity of state and default
+                        boolean hasState = flagTable.contains("state");
+                        boolean hasDefault = flagTable.contains("default");
+
+                        if (hasState && hasDefault) {
+                            diagnostics = diagnostics.add(ConfigValidationMessage.error(path, "Flag rule must not define both state and default"));
                             regionValid = false;
                             continue;
                         }
-                        FlagState defaultState = parseFlagState(defStr);
-                        if (defaultState == null) {
-                            diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".default", "Invalid default flag state: " + defStr));
+
+                        if (!hasState && !hasDefault) {
+                            diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".default", "Flag rule must define either state or default"));
                             regionValid = false;
                             continue;
                         }
 
-                        List<String> allowList = new ArrayList<>();
-                        if (condTable.contains("allow")) {
-                            Object allowObj = condTable.get("allow");
-                            if (!(allowObj instanceof TomlArray)) {
-                                diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".allow", "allow must be an array of strings"));
+                        if (hasState) {
+                            Object stateObj = flagTable.get("state");
+                            if (!(stateObj instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".state", "state must be a string"));
                                 regionValid = false;
                                 continue;
                             }
-                            TomlArray allowArray = (TomlArray) allowObj;
-                            boolean listValid = true;
-                            for (int i = 0; i < allowArray.size(); i++) {
-                                Object item = allowArray.get(i);
-                                if (!(item instanceof String)) {
-                                    diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".allow[" + i + "]", "Allow list element must be a string"));
-                                    listValid = false;
-                                    break;
-                                }
-                                allowList.add((String) item);
-                            }
-                            if (!listValid) {
+                            String stateStr = (String) stateObj;
+                            FlagState state = parseFlagState(stateStr);
+                            if (state != FlagState.ALLOW && state != FlagState.DENY) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".state", "Invalid state: must be allow or deny"));
                                 regionValid = false;
                                 continue;
                             }
-                        }
 
-                        List<String> denyList = new ArrayList<>();
-                        if (condTable.contains("deny")) {
-                            Object denyObj = condTable.get("deny");
-                            if (!(denyObj instanceof TomlArray)) {
-                                diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".deny", "deny must be an array of strings"));
+                            if (flagTable.contains("allow") || flagTable.contains("deny")) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path, "allow and deny selector arrays must not be present when state is defined"));
                                 regionValid = false;
                                 continue;
                             }
-                            TomlArray denyArray = (TomlArray) denyObj;
-                            boolean listValid = true;
-                            for (int i = 0; i < denyArray.size(); i++) {
-                                Object item = denyArray.get(i);
-                                if (!(item instanceof String)) {
-                                    diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".deny[" + i + "]", "Deny list element must be a string"));
-                                    listValid = false;
-                                    break;
-                                }
-                                denyList.add((String) item);
-                            }
-                            if (!listValid) {
-                                regionValid = false;
-                                continue;
-                            }
-                        }
 
-                        try {
-                            flagsMap.put(flagKey, FlagRuleConfig.conditional(defaultState, allowList, denyList));
-                        } catch (Exception e) {
-                            diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr, e.getMessage()));
-                            regionValid = false;
+                            flagsMap.put(flagKey, FlagRuleConfig.simple(state, group));
+
+                        } else {
+                            // hasDefault
+                            Object defObj = flagTable.get("default");
+                            if (!(defObj instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".default", "default must be a string"));
+                                regionValid = false;
+                                continue;
+                            }
+                            String defStr = (String) defObj;
+                            FlagState defaultState = parseFlagState(defStr);
+                            if (defaultState == null) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".default", "Invalid default flag state: " + defStr));
+                                regionValid = false;
+                                continue;
+                            }
+
+                            List<String> allowList = new ArrayList<>();
+                            if (flagTable.contains("allow")) {
+                                Object allowObj = flagTable.get("allow");
+                                if (!(allowObj instanceof TomlArray)) {
+                                    diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".allow", "allow must be an array of strings"));
+                                    regionValid = false;
+                                    continue;
+                                }
+                                TomlArray allowArray = (TomlArray) allowObj;
+                                boolean listValid = true;
+                                for (int i = 0; i < allowArray.size(); i++) {
+                                    Object item = allowArray.get(i);
+                                    if (!(item instanceof String)) {
+                                        diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".allow[" + i + "]", "Allow list element must be a string"));
+                                        listValid = false;
+                                        break;
+                                    }
+                                    allowList.add((String) item);
+                                }
+                                if (!listValid) {
+                                    regionValid = false;
+                                    continue;
+                                }
+                            }
+
+                            List<String> denyList = new ArrayList<>();
+                            if (flagTable.contains("deny")) {
+                                Object denyObj = flagTable.get("deny");
+                                if (!(denyObj instanceof TomlArray)) {
+                                    diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".deny", "deny must be an array of strings"));
+                                    regionValid = false;
+                                    continue;
+                                }
+                                TomlArray denyArray = (TomlArray) denyObj;
+                                boolean listValid = true;
+                                for (int i = 0; i < denyArray.size(); i++) {
+                                    Object item = denyArray.get(i);
+                                    if (!(item instanceof String)) {
+                                        diagnostics = diagnostics.add(ConfigValidationMessage.error(path + ".deny[" + i + "]", "Deny list element must be a string"));
+                                        listValid = false;
+                                        break;
+                                    }
+                                    denyList.add((String) item);
+                                }
+                                if (!listValid) {
+                                    regionValid = false;
+                                    continue;
+                                }
+                            }
+
+                            try {
+                                flagsMap.put(flagKey, FlagRuleConfig.conditional(defaultState, allowList, denyList, group));
+                            } catch (Exception e) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error(path, e.getMessage()));
+                                regionValid = false;
+                            }
                         }
                     } else {
                         diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr, "Flag value must be a string or a table"));

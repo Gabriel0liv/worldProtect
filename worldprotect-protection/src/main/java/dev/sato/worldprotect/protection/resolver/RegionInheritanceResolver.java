@@ -68,6 +68,26 @@ public final class RegionInheritanceResolver {
     }
 
     /**
+     * Finds the effective flag rule for the given region, flag key, and role in the lineage.
+     */
+    public Optional<FlagRule> effectiveFlagRule(Region region, FlagKey flagKey, dev.sato.worldprotect.protection.subject.RegionRole role) {
+        Objects.requireNonNull(region, "region must not be null");
+        Objects.requireNonNull(flagKey, "flagKey must not be null");
+        Objects.requireNonNull(role, "role must not be null");
+
+        for (Region r : lineage(region)) {
+            Optional<FlagRule> ruleOpt = r.flags().rule(flagKey);
+            if (ruleOpt.isPresent()) {
+                FlagRule rule = ruleOpt.get();
+                if (rule.group().matches(role)) {
+                    return ruleOpt;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Combines subjects across the region's lineage (parent owners/members are inherited).
      * Child owners take precedence over member roles.
      */

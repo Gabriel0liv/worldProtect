@@ -117,4 +117,35 @@ public final class FlagRuleTest {
         assertEquals(FlagRuleMatchSource.DEFAULT, evalNull.source());
         assertFalse(evalNull.matchedSelector().isPresent());
     }
+
+    @Test
+    public void testRegionGroupSupport() {
+        // Defaults to ALL
+        FlagRule r1 = FlagRule.simple(FlagState.ALLOW);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.ALL, r1.group());
+
+        // Custom simple
+        FlagRule r2 = FlagRule.simple(FlagState.DENY, dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS, r2.group());
+
+        // Custom conditional
+        FlagRule r3 = FlagRule.conditional(
+                FlagState.DENY,
+                ResourceSelectorSet.empty(),
+                ResourceSelectorSet.empty(),
+                dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS
+        );
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS, r3.group());
+
+        // Equals, hashCode, toString
+        FlagRule r3Copy = FlagRule.conditional(
+                FlagState.DENY,
+                ResourceSelectorSet.empty(),
+                ResourceSelectorSet.empty(),
+                dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS
+        );
+        assertEquals(r3, r3Copy);
+        assertEquals(r3.hashCode(), r3Copy.hashCode());
+        assertTrue(r3.toString().contains("group=MEMBERS"));
+    }
 }

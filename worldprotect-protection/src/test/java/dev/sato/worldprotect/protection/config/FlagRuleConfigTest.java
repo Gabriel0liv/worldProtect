@@ -100,4 +100,35 @@ public final class FlagRuleConfigTest {
             FlagRuleConfig.conditional(FlagState.DENY, List.of("   "), List.of("botania:twig_wand"));
         });
     }
+
+    @Test
+    public void testRegionGroupSupport() {
+        // Defaults to ALL
+        FlagRuleConfig c1 = FlagRuleConfig.simple(FlagState.ALLOW);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.ALL, c1.group());
+
+        // Custom simple
+        FlagRuleConfig c2 = FlagRuleConfig.simple(FlagState.DENY, dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS);
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS, c2.group());
+
+        // Custom conditional
+        FlagRuleConfig c3 = FlagRuleConfig.conditional(
+                FlagState.DENY,
+                List.of("create:wrench"),
+                List.of(),
+                dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS
+        );
+        assertEquals(dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS, c3.group());
+        
+        // Equals, hashCode, toString
+        FlagRuleConfig c3Copy = FlagRuleConfig.conditional(
+                FlagState.DENY,
+                List.of("create:wrench"),
+                List.of(),
+                dev.sato.worldprotect.protection.subject.RegionGroup.MEMBERS
+        );
+        assertEquals(c3, c3Copy);
+        assertEquals(c3.hashCode(), c3Copy.hashCode());
+        assertTrue(c3.toString().contains("group=MEMBERS"));
+    }
 }

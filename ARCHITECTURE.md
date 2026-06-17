@@ -114,6 +114,25 @@ We support region inheritance where child regions can declare a parent reference
 - **Permission Bypass Isolation**: Actor bypass permissions are child-specific. Parent-specific bypass permissions (e.g. `worldprotect.region.parent.owner`) cannot bypass decisions in a child region.
 
 
+## Region-Group Scoped Flags
+
+We support scoping flag rules to specific region groups based on the actor's membership role within the region:
+- **Region Groups (`RegionGroup`)**: Represents subsets of roles in the region:
+  - `all`: Matches any actor role (default).
+  - `owners`: Matches only owners (`RegionRole.OWNER`).
+  - `members`: Matches owners and members (`RegionRole.OWNER` or `RegionRole.MEMBER`).
+  - `nonowners`: Matches members and non-members (`RegionRole.MEMBER` or `RegionRole.NONE`).
+  - `nonmembers`: Matches only non-members (`RegionRole.NONE`).
+- **TOML Configuration Syntax**: Defined under table-based flags by specifying a `group` string property:
+  ```toml
+  [regions.spawn.flags.break-block]
+  state = "deny"
+  group = "members"
+  ```
+- **Lineage Traversal with Role Scoping**: Traversal is performed child-first using `effectiveFlagRule(region, flagKey, role)`. A rule is only considered applicable if the actor's resolved `RegionRole` (computed using effective inherited subjects) matches the rule's `RegionGroup`. Rules that do not match are treated as not applicable, allowing fallback to parent matching rules in the lineage.
+- **Bypass & Access Policies**: The region access policy remains strictly local to the matched region. Bypass permissions (owner/member) are checked against the matched region's ID and access policy.
+
+
 ## In-Memory Configuration Model
 
 We represent the plugin configuration in memory using a platform-independent model that mirrors the logical structure of a future persistent file layout (e.g. YAML/TOML/JSON).

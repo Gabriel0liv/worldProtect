@@ -90,3 +90,12 @@ This document lists strict instructions that all future AI agents working on thi
 - **Hierarchy Validation**: Parent-child references must be validated structurally to verify that parent regions exist, reside in the same dimension as the child region, and do not introduce cycles/circular dependencies in the inheritance graph. Reject invalid configurations with clear validation errors.
 
 
+## Region-Group Scoped Flag Rules
+
+- **Single Group per Flag Rule**: Do not support or implement multi-group flag values (e.g., arrays or comma-separated lists of groups). Each flag rule configuration must correspond to exactly one `RegionGroup`.
+- **Lowercase Group Keys**: The TOML configuration parser must parse the `group` property case-insensitively, normalizing it to lowercase. Reject invalid values with an `ERROR` diagnostic at parsing time.
+- **Lineage Traversal & Skip Fallback**: Ensure that when evaluating effective flag rules with `effectiveFlagRule(..., RegionRole)`, any rule with a `RegionGroup` that does not match the actor's computed role is treated as not applicable. The traversal must proceed to the parent regions in the lineage rather than resolving to a default state immediately.
+- **Local Access Policies & Bypass**: The `RegionAccessPolicy` remains strictly local. Flag-specific or role-based bypass permissions (`owners-bypass`, `members-bypass`) must be resolved only against the matched region's ID and its local policy. Do not allow parent-level access policies or parent bypass permissions to override child decisions.
+
+
+

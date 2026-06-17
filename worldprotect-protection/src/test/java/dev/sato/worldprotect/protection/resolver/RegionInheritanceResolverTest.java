@@ -107,4 +107,27 @@ public final class RegionInheritanceResolverTest {
         assertTrue(effective.members().contains(p3));
         assertFalse(effective.members().contains(p1));
     }
+
+    @Test
+    public void testEffectiveFlagRuleRoleAwareFallback() {
+        FlagRule rootRule = FlagRule.simple(FlagState.DENY, dev.sato.worldprotect.protection.subject.RegionGroup.ALL);
+        FlagRule parentRule = FlagRule.simple(FlagState.ALLOW, dev.sato.worldprotect.protection.subject.RegionGroup.OWNERS);
+        
+        Region rRoot = new CuboidRegion(RegionId.of("root"), overworld, min, max, 0, RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, rootRule)), RegionSubjects.empty(), RegionAccessPolicy.defaults(), Optional.empty());
+        Region rParent = new CuboidRegion(RegionId.of("parent"), overworld, min, max, 0, RegionFlags.ofRules(Map.of(BuiltInFlags.BREAK_BLOCK_KEY, parentRule)), RegionSubjects.empty(), RegionAccessPolicy.defaults(), Optional.of(RegionId.of("root")));
+        Region rChild = new CuboidRegion(RegionId.of("child"), overworld, min, max, 0, RegionFlags.empty(), RegionSubjects.empty(), RegionAccessPolicy.defaults(), Optional.of(RegionId.of("parent")));
+
+        RegionSet set = RegionSet.of(List.of(rRoot, rParent, rChild));
+        RegionInheritanceResolver resolver = new RegionInheritanceResolver(set);
+
+        // If role is OWNER, matches parentRule (ALLOW) which overrides root (DENY)
+        Optional<FlagRule> ownerRule = resolver.effectiveFlagRule(rChild, BuiltInFlags.BREAK_BLOCK_KEY, dev.sato.worldprotect.protection.subject.RegionRole.OWNER);
+        assertTrue(ownerRule.isPresent());
+        assertEquals(parentRule, ownerRule.get());
+
+        // If role is MEMBER, does not match parentRule (OWNERS only). Fallback to rootRule (DENY)
+        Optional<FlagRule> memberRule = resolver.effectiveFlagRule(rChild, BuiltInFlags.BREAK_BLOCK_KEY, dev.sato.worldprotect.protection.subject.RegionRole.MEMBER);
+        assertTrue(memberRule.isPresent());
+        assertEquals(rootRule, memberRule.get());
+    }
 }

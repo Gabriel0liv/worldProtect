@@ -2,6 +2,7 @@ package dev.sato.worldprotect.protection.rule;
 
 import dev.sato.worldprotect.minecraft.ResourceRef;
 import dev.sato.worldprotect.protection.flag.FlagState;
+import dev.sato.worldprotect.protection.subject.RegionGroup;
 import java.util.Objects;
 
 /**
@@ -11,24 +12,40 @@ public final class FlagRule {
     private final FlagState defaultState;
     private final ResourceSelectorSet allowSelectors;
     private final ResourceSelectorSet denySelectors;
+    private final RegionGroup group;
 
     public FlagRule(FlagState defaultState, ResourceSelectorSet allowSelectors, ResourceSelectorSet denySelectors) {
+        this(defaultState, allowSelectors, denySelectors, RegionGroup.ALL);
+    }
+
+    public FlagRule(FlagState defaultState, ResourceSelectorSet allowSelectors, ResourceSelectorSet denySelectors, RegionGroup group) {
         this.defaultState = Objects.requireNonNull(defaultState, "defaultState must not be null");
         this.allowSelectors = Objects.requireNonNull(allowSelectors, "allowSelectors must not be null");
         this.denySelectors = Objects.requireNonNull(denySelectors, "denySelectors must not be null");
+        this.group = Objects.requireNonNull(group, "group must not be null");
     }
 
     public static FlagRule simple(FlagState state) {
         Objects.requireNonNull(state, "state must not be null");
-        return new FlagRule(state, ResourceSelectorSet.empty(), ResourceSelectorSet.empty());
+        return new FlagRule(state, ResourceSelectorSet.empty(), ResourceSelectorSet.empty(), RegionGroup.ALL);
+    }
+
+    public static FlagRule simple(FlagState state, RegionGroup group) {
+        Objects.requireNonNull(state, "state must not be null");
+        Objects.requireNonNull(group, "group must not be null");
+        return new FlagRule(state, ResourceSelectorSet.empty(), ResourceSelectorSet.empty(), group);
     }
 
     public static FlagRule conditional(FlagState defaultState, ResourceSelectorSet allow, ResourceSelectorSet deny) {
-        return new FlagRule(defaultState, allow, deny);
+        return new FlagRule(defaultState, allow, deny, RegionGroup.ALL);
+    }
+
+    public static FlagRule conditional(FlagState defaultState, ResourceSelectorSet allow, ResourceSelectorSet deny, RegionGroup group) {
+        return new FlagRule(defaultState, allow, deny, group);
     }
 
     public static FlagRule pass() {
-        return new FlagRule(FlagState.PASS, ResourceSelectorSet.empty(), ResourceSelectorSet.empty());
+        return new FlagRule(FlagState.PASS, ResourceSelectorSet.empty(), ResourceSelectorSet.empty(), RegionGroup.ALL);
     }
 
     public FlagState defaultState() {
@@ -57,6 +74,14 @@ public final class FlagRule {
 
     public boolean isSimple() {
         return allowSelectors.isEmpty() && denySelectors.isEmpty();
+    }
+
+    public RegionGroup group() {
+        return group;
+    }
+
+    public RegionGroup getGroup() {
+        return group;
     }
 
     /**
@@ -94,19 +119,20 @@ public final class FlagRule {
         FlagRule flagRule = (FlagRule) o;
         return defaultState == flagRule.defaultState &&
                allowSelectors.equals(flagRule.allowSelectors) &&
-               denySelectors.equals(flagRule.denySelectors);
+               denySelectors.equals(flagRule.denySelectors) &&
+               group == flagRule.group;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(defaultState, allowSelectors, denySelectors);
+        return Objects.hash(defaultState, allowSelectors, denySelectors, group);
     }
 
     @Override
     public String toString() {
         if (isSimple()) {
-            return "FlagRule{simple=" + defaultState + "}";
+            return "FlagRule{simple=" + defaultState + ", group=" + group + "}";
         }
-        return "FlagRule{default=" + defaultState + ", allow=" + allowSelectors + ", deny=" + denySelectors + "}";
+        return "FlagRule{default=" + defaultState + ", allow=" + allowSelectors + ", deny=" + denySelectors + ", group=" + group + "}";
     }
 }
