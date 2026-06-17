@@ -20,10 +20,17 @@ public final class SubjectResolver {
      * Resolves the role of the subject context inside the given region.
      */
     public static RegionRole roleInRegion(ProtectionSubjectContext context, Region region) {
-        Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(region, "region must not be null");
+        return roleInRegion(context, region.subjects());
+    }
 
-        RegionSubjects subjects = region.subjects();
+    /**
+     * Resolves the role of the subject context inside the given region subjects.
+     */
+    public static RegionRole roleInRegion(ProtectionSubjectContext context, RegionSubjects subjects) {
+        Objects.requireNonNull(context, "context must not be null");
+        Objects.requireNonNull(subjects, "subjects must not be null");
+
         RegionRole highestRole = RegionRole.NONE;
 
         for (SubjectRef subject : context.actorSubjects().subjects()) {

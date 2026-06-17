@@ -88,4 +88,38 @@ public final class GlobalRegionTest {
         assertNotEquals(r1.hashCode(), r3.hashCode());
         assertNotNull(r1.toString());
     }
+
+    @Test
+    public void testParentIdDefaultsToEmpty() {
+        RegionId id = RegionId.of("global");
+        DimensionRef dim = new DimensionRef(ResourceRef.of("minecraft", "overworld"));
+        GlobalRegion region = new GlobalRegion(id, dim, 0, RegionFlags.empty(), RegionSubjects.empty(), RegionAccessPolicy.defaults());
+        assertFalse(region.parentId().isPresent());
+        assertFalse(region.getParentId().isPresent());
+    }
+
+    @Test
+    public void testParentIdPreserved() {
+        RegionId id = RegionId.of("global");
+        RegionId parent = RegionId.of("parent");
+        DimensionRef dim = new DimensionRef(ResourceRef.of("minecraft", "overworld"));
+        GlobalRegion region = new GlobalRegion(
+                id, dim, 0, RegionFlags.empty(), RegionSubjects.empty(), RegionAccessPolicy.defaults(),
+                java.util.Optional.of(parent)
+        );
+        assertTrue(region.parentId().isPresent());
+        assertEquals(parent, region.parentId().get());
+    }
+
+    @Test
+    public void testSelfParentThrows() {
+        RegionId id = RegionId.of("global");
+        DimensionRef dim = new DimensionRef(ResourceRef.of("minecraft", "overworld"));
+        assertThrows(IllegalArgumentException.class, () -> {
+            new GlobalRegion(
+                    id, dim, 0, RegionFlags.empty(), RegionSubjects.empty(), RegionAccessPolicy.defaults(),
+                    java.util.Optional.of(id)
+            );
+        });
+    }
 }

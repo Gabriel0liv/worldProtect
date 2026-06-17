@@ -55,6 +55,11 @@ public final class WorldProtectConfig {
             result = result.merge(rc.validate(flagRegistry));
         }
 
+        if (!result.hasErrors()) {
+            RegionHierarchyValidator hierarchyValidator = new RegionHierarchyValidator();
+            result = result.merge(hierarchyValidator.validate(this));
+        }
+
         return result;
     }
 

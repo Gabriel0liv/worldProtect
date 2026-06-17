@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class RegionConfigTest {
@@ -147,5 +148,60 @@ public final class RegionConfigTest {
         // Should contain error for invalid UUID and error for unknown flag
         assertTrue(result.errors().stream().anyMatch(m -> m.path().equals("regions.spawn.subjects.owners[0]")));
         assertTrue(result.errors().stream().anyMatch(m -> m.path().equals("regions.spawn.access.owner-bypass-flags[0]")));
+    }
+
+    @Test
+    public void testParentIdDefaultsToEmpty() {
+        RegionConfig config = RegionConfig.of(regionId, overworld, 100, validBounds, Map.of());
+        assertFalse(config.parentId().isPresent());
+        assertFalse(config.getParentId().isPresent());
+    }
+
+    @Test
+    public void testParentIdPreserved() {
+        RegionId parent = RegionId.of("parent-region");
+        RegionConfig config = RegionConfig.of(
+                regionId, overworld, 100, validBounds, Map.of(),
+                RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults(),
+                Optional.of(parent)
+        );
+        assertTrue(config.parentId().isPresent());
+        assertEquals(parent, config.parentId().get());
+    }
+
+    @Test
+    public void testSelfParentIdFailsValidation() {
+        RegionConfig config = RegionConfig.of(
+                regionId, overworld, 100, validBounds, Map.of(),
+                RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults(),
+                Optional.of(regionId)
+        );
+        ConfigValidationResult result = config.validate(registry);
+        assertFalse(result.isValid());
+        assertTrue(result.errors().stream().anyMatch(m -> 
+                m.path().equals("regions.spawn.parent") && m.message().contains("parent must not be itself")));
+    }
+
+    @Test
+    public void testEqualsAndHashCodeIncludeParentId() {
+        RegionConfig c1 = RegionConfig.of(
+                regionId, overworld, 100, validBounds, Map.of(),
+                RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults(),
+                Optional.of(RegionId.of("parent1"))
+        );
+        RegionConfig c2 = RegionConfig.of(
+                regionId, overworld, 100, validBounds, Map.of(),
+                RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults(),
+                Optional.of(RegionId.of("parent1"))
+        );
+        RegionConfig c3 = RegionConfig.of(
+                regionId, overworld, 100, validBounds, Map.of(),
+                RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults(),
+                Optional.of(RegionId.of("parent2"))
+        );
+
+        assertEquals(c1, c2);
+        assertEquals(c1.hashCode(), c2.hashCode());
+        assertNotEquals(c1, c3);
     }
 }

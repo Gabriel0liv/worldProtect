@@ -3,6 +3,7 @@ package dev.sato.worldprotect.protection.region;
 import dev.sato.worldprotect.minecraft.BlockPosRef;
 import dev.sato.worldprotect.minecraft.DimensionRef;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A cuboid region bounded by minimum and maximum x, y, z points.
@@ -16,6 +17,7 @@ public final class CuboidRegion implements Region {
     private final RegionFlags flags;
     private final dev.sato.worldprotect.protection.subject.RegionSubjects subjects;
     private final dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy;
+    private final Optional<RegionId> parentId;
 
     public CuboidRegion(RegionId id, DimensionRef dimension, BlockPosRef pos1, BlockPosRef pos2, int priority) {
         this(id, dimension, pos1, pos2, priority, RegionFlags.empty());
@@ -35,6 +37,20 @@ public final class CuboidRegion implements Region {
             dev.sato.worldprotect.protection.subject.RegionSubjects subjects,
             dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy
     ) {
+        this(id, dimension, pos1, pos2, priority, flags, subjects, accessPolicy, Optional.empty());
+    }
+
+    public CuboidRegion(
+            RegionId id,
+            DimensionRef dimension,
+            BlockPosRef pos1,
+            BlockPosRef pos2,
+            int priority,
+            RegionFlags flags,
+            dev.sato.worldprotect.protection.subject.RegionSubjects subjects,
+            dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy,
+            Optional<RegionId> parentId
+    ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.dimension = Objects.requireNonNull(dimension, "dimension must not be null");
         Objects.requireNonNull(pos1, "pos1 must not be null");
@@ -52,6 +68,10 @@ public final class CuboidRegion implements Region {
         this.flags = Objects.requireNonNull(flags, "flags must not be null");
         this.subjects = Objects.requireNonNull(subjects, "subjects must not be null");
         this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy must not be null");
+        this.parentId = Objects.requireNonNull(parentId, "parentId must not be null");
+        if (parentId.isPresent() && parentId.get().equals(id)) {
+            throw new IllegalArgumentException("Parent ID cannot be equal to region ID");
+        }
     }
 
     @Override
@@ -97,11 +117,43 @@ public final class CuboidRegion implements Region {
     }
 
     @Override
+    public Optional<RegionId> parentId() {
+        return parentId;
+    }
+
+    @Override
+    public Optional<RegionId> getParentId() {
+        return parentId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CuboidRegion that = (CuboidRegion) o;
+        return minX == that.minX && minY == that.minY && minZ == that.minZ &&
+               maxX == that.maxX && maxY == that.maxY && maxZ == that.maxZ &&
+               priority == that.priority &&
+               id.equals(that.id) &&
+               dimension.equals(that.dimension) &&
+               flags.equals(that.flags) &&
+               subjects.equals(that.subjects) &&
+               accessPolicy.equals(that.accessPolicy) &&
+               parentId.equals(that.parentId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, dimension, minX, minY, minZ, maxX, maxY, maxZ, priority, flags, subjects, accessPolicy, parentId);
+    }
+
+    @Override
     public String toString() {
         return "CuboidRegion{id=" + id + ", dimension=" + dimension +
                ", min=(" + minX + "," + minY + "," + minZ + ")" +
                ", max=(" + maxX + "," + maxY + "," + maxZ + ")" +
                ", priority=" + priority + ", flags=" + flags +
-               ", subjects=" + subjects + ", accessPolicy=" + accessPolicy + "}";
+               ", subjects=" + subjects + ", accessPolicy=" + accessPolicy +
+               ", parentId=" + parentId + "}";
     }
 }

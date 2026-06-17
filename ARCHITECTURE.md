@@ -103,6 +103,17 @@ We support defining global, dimension-wide regions (e.g., `bounds.type = "global
 - **Configuration & Validation**: In the configuration model (`BoundsConfig`), a global bounds type has no coordinate requirements. Calling `min()` or `max()` on a global `BoundsConfig` throws `IllegalStateException`. To prevent silent errors during mapping, safe access is provided via `minOptional()` and `maxOptional()`. If coordinates are specified in a TOML config under a global bounds type, the parser emits a `WARNING` diagnostic but parses the region successfully, ignoring the useless coordinates.
 
 
+## Region Inheritance / Parent Model
+
+We support region inheritance where child regions can declare a parent reference (`parent = "<region_id>"`):
+- **Lineage Ordering**: When resolving properties, a region's lineage is constructed starting child-first (child, parent, grandparent, ..., root parent). Any cycle (circular reference) or missing parent reference is validated and rejected with detailed diagnostics.
+- **Lineage Dimension Constraint**: A parent region must reside in the exact same dimension as its child.
+- **Effective Flag Resolution**: Flag rules are resolved in a child-first manner (the first explicit flag rule defined in the lineage is applied).
+- **Effective Subject Merging**: Owners and members are aggregated across the lineage. To determine the actor's role in the matched region, all owners and members in the lineage are merged. The owner role overrides the member role globally.
+- **Local Access Policies**: Region access policies (`RegionAccessPolicy`) are strictly local and are NOT inherited. Bypass rules (e.g. owner/member bypass permissions or role bypasses) always check only the matched child region's access policy.
+- **Permission Bypass Isolation**: Actor bypass permissions are child-specific. Parent-specific bypass permissions (e.g. `worldprotect.region.parent.owner`) cannot bypass decisions in a child region.
+
+
 ## In-Memory Configuration Model
 
 We represent the plugin configuration in memory using a platform-independent model that mirrors the logical structure of a future persistent file layout (e.g. YAML/TOML/JSON).

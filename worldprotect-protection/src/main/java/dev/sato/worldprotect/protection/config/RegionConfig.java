@@ -6,6 +6,7 @@ import dev.sato.worldprotect.protection.flag.FlagRegistry;
 import dev.sato.worldprotect.protection.region.RegionId;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Immutable configuration representation of a configured region.
@@ -18,6 +19,7 @@ public final class RegionConfig {
     private final Map<FlagKey, FlagRuleConfig> flags;
     private final RegionSubjectsConfig subjectsConfig;
     private final RegionAccessPolicyConfig accessPolicyConfig;
+    private final Optional<RegionId> parentId;
 
     private RegionConfig(
             RegionId id,
@@ -26,7 +28,8 @@ public final class RegionConfig {
             BoundsConfig bounds,
             Map<FlagKey, FlagRuleConfig> flags,
             RegionSubjectsConfig subjectsConfig,
-            RegionAccessPolicyConfig accessPolicyConfig
+            RegionAccessPolicyConfig accessPolicyConfig,
+            Optional<RegionId> parentId
     ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.dimension = Objects.requireNonNull(dimension, "dimension must not be null");
@@ -42,10 +45,11 @@ public final class RegionConfig {
         this.priority = priority;
         this.subjectsConfig = Objects.requireNonNull(subjectsConfig, "subjectsConfig must not be null");
         this.accessPolicyConfig = Objects.requireNonNull(accessPolicyConfig, "accessPolicyConfig must not be null");
+        this.parentId = Objects.requireNonNull(parentId, "parentId must not be null");
     }
 
     public static RegionConfig of(RegionId id, DimensionRef dimension, int priority, BoundsConfig bounds, Map<FlagKey, FlagRuleConfig> flags) {
-        return new RegionConfig(id, dimension, priority, bounds, flags, RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults());
+        return new RegionConfig(id, dimension, priority, bounds, flags, RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults(), Optional.empty());
     }
 
     public static RegionConfig of(
@@ -57,7 +61,20 @@ public final class RegionConfig {
             RegionSubjectsConfig subjectsConfig,
             RegionAccessPolicyConfig accessPolicyConfig
     ) {
-        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig);
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, Optional.empty());
+    }
+
+    public static RegionConfig of(
+            RegionId id,
+            DimensionRef dimension,
+            int priority,
+            BoundsConfig bounds,
+            Map<FlagKey, FlagRuleConfig> flags,
+            RegionSubjectsConfig subjectsConfig,
+            RegionAccessPolicyConfig accessPolicyConfig,
+            Optional<RegionId> parentId
+    ) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
     }
 
     public RegionId id() {
@@ -86,6 +103,14 @@ public final class RegionConfig {
 
     public RegionAccessPolicyConfig accessPolicyConfig() {
         return accessPolicyConfig;
+    }
+
+    public Optional<RegionId> parentId() {
+        return parentId;
+    }
+
+    public Optional<RegionId> getParentId() {
+        return parentId;
     }
 
     public RegionId getId() {
@@ -147,6 +172,11 @@ public final class RegionConfig {
         // Validate access policy
         result = result.merge(accessPolicyConfig.validate("regions." + id.getValue() + ".access", flagRegistry));
 
+        // Validate parentId (self parent check)
+        if (parentId.isPresent() && parentId.get().equals(id)) {
+            result = result.add(ConfigValidationMessage.error("regions." + id.getValue() + ".parent", "Region parent must not be itself"));
+        }
+
         return result;
     }
 
@@ -161,18 +191,19 @@ public final class RegionConfig {
                bounds.equals(that.bounds) &&
                flags.equals(that.flags) &&
                subjectsConfig.equals(that.subjectsConfig) &&
-               accessPolicyConfig.equals(that.accessPolicyConfig);
+               accessPolicyConfig.equals(that.accessPolicyConfig) &&
+               parentId.equals(that.parentId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig);
+        return Objects.hash(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig, parentId);
     }
 
     @Override
     public String toString() {
         return "RegionConfig{id=" + id + ", dimension=" + dimension + ", priority=" + priority +
                ", bounds=" + bounds + ", flags=" + flags + ", subjectsConfig=" + subjectsConfig +
-               ", accessPolicyConfig=" + accessPolicyConfig + "}";
+               ", accessPolicyConfig=" + accessPolicyConfig + ", parentId=" + parentId + "}";
     }
 }

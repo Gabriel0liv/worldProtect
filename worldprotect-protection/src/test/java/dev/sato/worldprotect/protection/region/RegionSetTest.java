@@ -111,4 +111,27 @@ public final class RegionSetTest {
         assertEquals(1, matchedNether.size());
         assertEquals("global-nether", matchedNether.get(0).getId().getValue());
     }
+
+    @Test
+    public void testDuplicateRegionIdsThrow() {
+        DimensionRef overworld = new DimensionRef(ResourceRef.of("minecraft", "overworld"));
+        Region r1 = new CuboidRegion(RegionId.of("spawn"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10);
+        Region r2 = new CuboidRegion(RegionId.of("spawn"), overworld, new BlockPosRef(20, 0, 20), new BlockPosRef(30, 10, 30), 20);
+
+        assertThrows(IllegalArgumentException.class, () -> RegionSet.of(List.of(r1, r2)));
+    }
+
+    @Test
+    public void testFindByIdAndContainsId() {
+        DimensionRef overworld = new DimensionRef(ResourceRef.of("minecraft", "overworld"));
+        Region r1 = new CuboidRegion(RegionId.of("spawn"), overworld, new BlockPosRef(0, 0, 0), new BlockPosRef(10, 10, 10), 10);
+        RegionSet set = RegionSet.of(List.of(r1));
+
+        assertTrue(set.containsId(RegionId.of("spawn")));
+        assertFalse(set.containsId(RegionId.of("other")));
+
+        assertTrue(set.findById(RegionId.of("spawn")).isPresent());
+        assertEquals(r1, set.findById(RegionId.of("spawn")).get());
+        assertFalse(set.findById(RegionId.of("other")).isPresent());
+    }
 }

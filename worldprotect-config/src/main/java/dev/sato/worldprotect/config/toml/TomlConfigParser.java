@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Service to parse TOML configuration strings or files into WorldProtectConfig.
@@ -102,6 +103,24 @@ public final class TomlConfigParser {
                     regionValid = false;
                 } else {
                     priority = ((Long) prioObj).intValue();
+                }
+            }
+
+            // 3b. Parent validation (optional string)
+            Optional<RegionId> parentId = Optional.empty();
+            if (region.contains("parent")) {
+                Object parentObj = region.get("parent");
+                if (!(parentObj instanceof String)) {
+                    diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".parent", "Parent must be a string"));
+                    regionValid = false;
+                } else {
+                    String parentStr = (String) parentObj;
+                    try {
+                        parentId = Optional.of(RegionId.of(parentStr));
+                    } catch (Exception e) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".parent", "Invalid parent region ID: " + e.getMessage()));
+                        regionValid = false;
+                    }
                 }
             }
 
@@ -392,7 +411,7 @@ public final class TomlConfigParser {
             }
 
             if (regionValid) {
-                regionsList.add(RegionConfig.of(regionId, dimension, priority, boundsConfig, flagsMap, subjectsConfig, accessPolicyConfig));
+                regionsList.add(RegionConfig.of(regionId, dimension, priority, boundsConfig, flagsMap, subjectsConfig, accessPolicyConfig, parentId));
             }
         }
 

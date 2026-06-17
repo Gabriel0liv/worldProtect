@@ -81,3 +81,12 @@ This document lists strict instructions that all future AI agents working on thi
 - **Dimension Isolation Constraints**: Global regions must only match positions inside their configured dimension. Ensure that dimension verification always happens in `RegionSet.matching(...)` via `dimension.equals(region.getDimension())` before evaluating coordinate containment. A global region must never match or affect other dimensions.
 - **Normal Bounds Type**: Keep `bounds.type = "global"` as a normal region bounds type. Do not introduce special, hardcoded region names (e.g. `__global__`) inside the domain.
 
+
+## Region Inheritance / Parent Model Rules
+
+- **No Access Policy Inheritance**: Region access policies (`RegionAccessPolicy`) must remain strictly local to the matched region. Never inherit or merge access policies across the lineage.
+- **Bypass Permission Isolation**: Bypass permissions check only the matched region's ID (e.g., `worldprotect.region.<regionId>.owner` where `<regionId>` is the matched child region). Never allow parent-specific bypass permissions (like `worldprotect.region.<parentId>.owner`) to bypass child region decisions.
+- **Role Evaluation via Lineage**: ProtectionResolver must use inherited/effective subjects (aggregated child-first through the lineage where owners override members) to determine the owner/member role, but must evaluate whether this role can bypass the checked flag using ONLY the matched region's local access policy.
+- **Hierarchy Validation**: Parent-child references must be validated structurally to verify that parent regions exist, reside in the same dimension as the child region, and do not introduce cycles/circular dependencies in the inheritance graph. Reject invalid configurations with clear validation errors.
+
+

@@ -2,6 +2,7 @@ package dev.sato.worldprotect.protection.region;
 
 import dev.sato.worldprotect.minecraft.BlockPosRef;
 import dev.sato.worldprotect.minecraft.DimensionRef;
+import java.util.Optional;
 
 /**
  * Base interface for protected regions in worldProtect.
@@ -42,4 +43,18 @@ public interface Region {
      * Gets the access policy defining how roles affect flag checking.
      */
     dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy();
+
+    /**
+     * Gets the parent region ID, if configured.
+     */
+    default Optional<RegionId> parentId() {
+        return Optional.empty();
+    }
+
+    /**
+     * Gets the parent region ID, if configured.
+     */
+    default Optional<RegionId> getParentId() {
+        return parentId();
+    }
 }

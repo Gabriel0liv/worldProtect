@@ -678,4 +678,62 @@ public final class TomlConfigParserTest {
         assertTrue(validation.errors().stream().anyMatch(e -> e.path().contains("owners[0]")));
         assertTrue(validation.errors().stream().anyMatch(e -> e.path().contains("members[0]")));
     }
+
+    @Test
+    public void testParsesParentKeySuccessfully() {
+        String toml =
+                "[regions.child]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "parent = \"spawn\"\n" +
+                "[regions.child.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+        WorldProtectConfig config = result.config().get();
+        assertEquals(1, config.regions().size());
+        assertTrue(config.regions().get(0).parentId().isPresent());
+        assertEquals("spawn", config.regions().get(0).parentId().get().getValue());
+    }
+
+    @Test
+    public void testParserFailsOnParentWrongType() {
+        String toml =
+                "[regions.child]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "parent = 123\n" +
+                "[regions.child.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertEquals("regions.child.parent", result.diagnostics().errors().get(0).path());
+        assertTrue(result.diagnostics().errors().get(0).message().contains("Parent must be a string"));
+    }
+
+    @Test
+    public void testParserFailsOnInvalidParentIdSyntax() {
+        String toml =
+                "[regions.child]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "parent = \"Invalid parent with spaces\"\n" +
+                "[regions.child.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertEquals("regions.child.parent", result.diagnostics().errors().get(0).path());
+        assertTrue(result.diagnostics().errors().get(0).message().contains("Invalid parent region ID"));
+    }
 }

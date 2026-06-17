@@ -44,7 +44,8 @@ public final class ConfigToDomainMapper {
                     regionConfig.priority(),
                     domainFlags,
                     regionConfig.subjectsConfig().toDomain(),
-                    regionConfig.accessPolicyConfig().toDomain()
+                    regionConfig.accessPolicyConfig().toDomain(),
+                    regionConfig.parentId()
             );
         } else if (bounds.type() == BoundsType.GLOBAL) {
             return new GlobalRegion(
@@ -53,7 +54,8 @@ public final class ConfigToDomainMapper {
                     regionConfig.priority(),
                     domainFlags,
                     regionConfig.subjectsConfig().toDomain(),
-                    regionConfig.accessPolicyConfig().toDomain()
+                    regionConfig.accessPolicyConfig().toDomain(),
+                    regionConfig.parentId()
             );
         } else {
             throw new IllegalArgumentException("Unsupported bounds type: " + bounds.type());

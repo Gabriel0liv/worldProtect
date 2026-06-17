@@ -481,4 +481,69 @@ public final class ConfigLoadServiceTest {
         assertTrue(result.diagnostics().messages().stream()
                 .anyMatch(msg -> msg.path().contains("owners[0]") && msg.message().contains("must not be empty or blank")));
     }
+
+    @Test
+    public void testLoadConfigWithValidParent() {
+        String toml =
+                "[regions.parent]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "[regions.parent.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n" +
+                "\n" +
+                "[regions.child]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 20\n" +
+                "parent = \"parent\"\n" +
+                "[regions.child.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [10, 60, 10]\n" +
+                "max = [50, 80, 50]\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.hasErrors());
+        assertTrue(result.loadedConfig().isPresent());
+
+        LoadedWorldProtectConfig loaded = result.loadedConfig().get();
+        assertEquals(2, loaded.regionSet().regions().size());
+        Optional<dev.sato.worldprotect.protection.region.Region> child = loaded.regionSet().findById(dev.sato.worldprotect.protection.region.RegionId.of("child"));
+        assertTrue(child.isPresent());
+        assertTrue(child.get().parentId().isPresent());
+        assertEquals("parent", child.get().parentId().get().getValue());
+    }
+
+    @Test
+    public void testLoadConfigWithCycleFails() {
+        String toml =
+                "[regions.a]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "parent = \"b\"\n" +
+                "[regions.a.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n" +
+                "\n" +
+                "[regions.b]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "parent = \"a\"\n" +
+                "[regions.b.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertTrue(result.diagnostics().messages().stream()
+                .anyMatch(msg -> msg.path().startsWith("regions.") && msg.message().contains("Circular inheritance")));
+    }
 }

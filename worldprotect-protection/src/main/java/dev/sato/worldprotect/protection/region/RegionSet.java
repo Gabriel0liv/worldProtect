@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * An immutable set of regions, allowing queries to find matching regions for a coordinate.
@@ -20,10 +21,33 @@ public final class RegionSet {
 
     public static RegionSet of(Collection<Region> regions) {
         Objects.requireNonNull(regions, "regions must not be null");
+        java.util.Set<RegionId> ids = new java.util.HashSet<>();
         for (Region region : regions) {
             Objects.requireNonNull(region, "region element must not be null");
+            if (!ids.add(region.getId())) {
+                throw new IllegalArgumentException("Duplicate region ID: " + region.getId().getValue());
+            }
         }
         return new RegionSet(List.copyOf(regions));
+    }
+
+    /**
+     * Finds a region by its unique ID.
+     */
+    public Optional<Region> findById(RegionId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        return regions.stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst();
+    }
+
+    /**
+     * Checks if this set contains a region with the specified ID.
+     */
+    public boolean containsId(RegionId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        return regions.stream()
+                .anyMatch(r -> r.getId().equals(id));
     }
 
     /**
