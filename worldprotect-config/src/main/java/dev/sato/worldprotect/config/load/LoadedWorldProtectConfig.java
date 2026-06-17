@@ -45,4 +45,8 @@ public final class LoadedWorldProtectConfig {
     public ConfigValidationResult diagnostics() {
         return diagnostics;
     }
+
+    public boolean hasWarnings() {
+        return diagnostics.hasWarnings();
+    }
 }

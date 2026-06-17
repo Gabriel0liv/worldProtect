@@ -64,6 +64,17 @@ Within the same priority group and same evaluated flag:
 - `ALLOW` beats `PASS`
 - `PASS` means continue
 
+## Region Permission and Subject Model
+
+We support a platform-independent permission and subject domain model for region protections. This separates identity (players, groups, system, console) and permissions from platform-specific APIs.
+
+- **Subjects & References (`SubjectRef`)**: Represents actors by logical types (`PLAYER`, `GROUP`, `CONSOLE`, `SYSTEM`).
+- **Region Roles (`RegionRole`)**: Standardizes roles (`OWNER`, `MEMBER`, `NONE`) with a natural precedence (`OWNER` > `MEMBER` > `NONE`).
+- **Access Policies (`RegionAccessPolicy`)**: Configures whether owners and members bypass specific flags within a region.
+- **Permission Sets (`PermissionSet`)**: Contains structured, immutable `PermissionKey` elements (hierarchical segment-aware checking using `startsWith`) for evaluating permissions like global bypass (`worldprotect.bypass`) or flag bypasses (`worldprotect.bypass.flag.<flag>`).
+- **Subject Context (`ProtectionSubjectContext`)**: Bundles an actor's subjects and their active permissions to resolve checks.
+- **Subject Resolver (`SubjectResolver`)**: Decouples role matching, global bypasses, and flag/region role bypass evaluation.
+
 ## Conditional Flag Rules and Resource Selectors
 
 Region flags can be configured as simple states or as complex conditional rules:

@@ -26,8 +26,24 @@ public final class ProtectionResolver {
      * Resolves the protection check for the given query and region set.
      */
     public ProtectionDecision resolve(ProtectionQuery query, RegionSet regionSet) {
+        return resolve(query, regionSet, null);
+    }
+
+    /**
+     * Resolves the protection check for the given query, region set, and subject context.
+     */
+    public ProtectionDecision resolve(
+            ProtectionQuery query,
+            RegionSet regionSet,
+            dev.sato.worldprotect.protection.permission.ProtectionSubjectContext subjectContext
+    ) {
         Objects.requireNonNull(query, "query must not be null");
         Objects.requireNonNull(regionSet, "regionSet must not be null");
+
+        // 1. If subjectContext has global bypass, return ALLOW immediately.
+        if (subjectContext != null && dev.sato.worldprotect.protection.subject.SubjectResolver.hasGlobalBypass(subjectContext)) {
+            return ProtectionDecision.allow("Action allowed due to global bypass", null, null);
+        }
 
         List<Region> matched = regionSet.matching(query.getDimension(), query.getPosition());
         if (matched.isEmpty()) {
@@ -69,6 +85,16 @@ public final class ProtectionResolver {
                 String allowSource = FlagRuleMatchSource.DEFAULT.name();
 
                 for (Region region : group) {
+                    // 2. Check if subjectContext has flag-specific bypass
+                    if (subjectContext != null && dev.sato.worldprotect.protection.subject.SubjectResolver.hasFlagBypass(subjectContext, flagKey)) {
+                        hasAllow = true;
+                        if (allowRegion == null) {
+                            allowRegion = region;
+                            allowSource = "flag bypass";
+                        }
+                        continue;
+                    }
+
                     Optional<FlagRule> ruleOpt = region.flags().rule(flagKey);
                     if (ruleOpt.isPresent()) {
                         FlagRule rule = ruleOpt.get();
@@ -81,10 +107,32 @@ public final class ProtectionResolver {
                         }
 
                         if (resolvedState == FlagState.DENY) {
-                            hasDeny = true;
-                            if (denyRegion == null) {
-                                denyRegion = region;
-                                denySource = source;
+                            boolean bypassed = false;
+                            if (subjectContext != null) {
+                                dev.sato.worldprotect.protection.subject.RegionRole role = dev.sato.worldprotect.protection.subject.SubjectResolver.roleInRegion(subjectContext, region);
+                                if (role == dev.sato.worldprotect.protection.subject.RegionRole.OWNER && region.accessPolicy().ownerBypasses(flagKey)) {
+                                    bypassed = true;
+                                    hasAllow = true;
+                                    if (allowRegion == null) {
+                                        allowRegion = region;
+                                        allowSource = "region owner bypass";
+                                    }
+                                } else if (role == dev.sato.worldprotect.protection.subject.RegionRole.MEMBER && region.accessPolicy().memberBypasses(flagKey)) {
+                                    bypassed = true;
+                                    hasAllow = true;
+                                    if (allowRegion == null) {
+                                        allowRegion = region;
+                                        allowSource = "region member bypass";
+                                    }
+                                }
+                            }
+
+                            if (!bypassed) {
+                                hasDeny = true;
+                                if (denyRegion == null) {
+                                    denyRegion = region;
+                                    denySource = source;
+                                }
                             }
                         } else if (resolvedState == FlagState.ALLOW) {
                             hasAllow = true;

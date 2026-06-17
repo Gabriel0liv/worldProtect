@@ -32,4 +32,14 @@ public interface Region {
      * Gets the flags configured for this region.
      */
     RegionFlags flags();
+
+    /**
+     * Gets the subjects associated with this region (owners, members).
+     */
+    dev.sato.worldprotect.protection.subject.RegionSubjects subjects();
+
+    /**
+     * Gets the access policy defining how roles affect flag checking.
+     */
+    dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy();
 }

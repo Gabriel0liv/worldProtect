@@ -14,12 +14,27 @@ public final class CuboidRegion implements Region {
     private final int maxX, maxY, maxZ;
     private final int priority;
     private final RegionFlags flags;
+    private final dev.sato.worldprotect.protection.subject.RegionSubjects subjects;
+    private final dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy;
 
     public CuboidRegion(RegionId id, DimensionRef dimension, BlockPosRef pos1, BlockPosRef pos2, int priority) {
         this(id, dimension, pos1, pos2, priority, RegionFlags.empty());
     }
 
     public CuboidRegion(RegionId id, DimensionRef dimension, BlockPosRef pos1, BlockPosRef pos2, int priority, RegionFlags flags) {
+        this(id, dimension, pos1, pos2, priority, flags, dev.sato.worldprotect.protection.subject.RegionSubjects.empty(), dev.sato.worldprotect.protection.subject.RegionAccessPolicy.defaults());
+    }
+
+    public CuboidRegion(
+            RegionId id,
+            DimensionRef dimension,
+            BlockPosRef pos1,
+            BlockPosRef pos2,
+            int priority,
+            RegionFlags flags,
+            dev.sato.worldprotect.protection.subject.RegionSubjects subjects,
+            dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy
+    ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.dimension = Objects.requireNonNull(dimension, "dimension must not be null");
         Objects.requireNonNull(pos1, "pos1 must not be null");
@@ -35,6 +50,8 @@ public final class CuboidRegion implements Region {
         
         this.priority = priority;
         this.flags = Objects.requireNonNull(flags, "flags must not be null");
+        this.subjects = Objects.requireNonNull(subjects, "subjects must not be null");
+        this.accessPolicy = Objects.requireNonNull(accessPolicy, "accessPolicy must not be null");
     }
 
     @Override
@@ -70,10 +87,21 @@ public final class CuboidRegion implements Region {
     }
 
     @Override
+    public dev.sato.worldprotect.protection.subject.RegionSubjects subjects() {
+        return subjects;
+    }
+
+    @Override
+    public dev.sato.worldprotect.protection.subject.RegionAccessPolicy accessPolicy() {
+        return accessPolicy;
+    }
+
+    @Override
     public String toString() {
         return "CuboidRegion{id=" + id + ", dimension=" + dimension +
                ", min=(" + minX + "," + minY + "," + minZ + ")" +
                ", max=(" + maxX + "," + maxY + "," + maxZ + ")" +
-               ", priority=" + priority + ", flags=" + flags + "}";
+               ", priority=" + priority + ", flags=" + flags +
+               ", subjects=" + subjects + ", accessPolicy=" + accessPolicy + "}";
     }
 }

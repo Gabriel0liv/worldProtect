@@ -20,6 +20,7 @@ public final class LoadedWorldProtectConfigTest {
         assertEquals(rawConfig, config.rawConfig());
         assertEquals(regionSet, config.regionSet());
         assertEquals(diagnostics, config.diagnostics());
+        assertFalse(config.hasWarnings());
     }
 
     @Test
@@ -32,6 +33,7 @@ public final class LoadedWorldProtectConfigTest {
         LoadedWorldProtectConfig config = LoadedWorldProtectConfig.of(rawConfig, regionSet, diagnostics);
         assertTrue(config.diagnostics().hasWarnings());
         assertFalse(config.diagnostics().hasErrors());
+        assertTrue(config.hasWarnings());
     }
 
     @Test

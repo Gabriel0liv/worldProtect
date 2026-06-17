@@ -66,8 +66,9 @@ This document lists strict instructions that all future AI agents working on thi
 - **Abstract Configuration Sources**: Keep loading input decoupled via `ConfigSource`. `FileTomlConfigSource` and `StringTomlConfigSource` must be used to supply files and test/default configurations respectively.
 - **Robust Exception Trapping**: Ensure `ConfigLoadService.load` traps all parser, structural validation, resource validation, and mapping exceptions, returning them inside `ConfigLoadResult.failure(...)` rather than throwing them to the calling loader. Null parameters to constructors or method calls may still throw.
 
+## Permission and Subject Model Rules
 
-
-
-
-
+- **Platform-Independent Subjects**: All subject modeling (`SubjectRef`, `ActorSubjects`, `RegionSubjects`) and permissions (`PermissionKey`, `PermissionSet`, `ProtectionSubjectContext`) must remain platform-independent. Do not import Fabric, NeoForge, or other platform/mod-specific permission APIs in this layer.
+- **Bypass Resolution Flow**: In `ProtectionResolver`, global bypass permissions must allow query actions immediately. Flag-specific bypasses allow matching flags. Role-specific bypasses (owners/members) only apply within regions where the actor actually holds that role, and do not erase same-priority denies in other overlapping regions.
+- **Priority Resolution**: Same-priority DENY overrides same-priority ALLOW (including role/flag bypass ALLOW). Higher-priority regions override lower-priority regions completely (e.g., higher-priority DENY overrides lower-priority OWNER bypass ALLOW).
+- **Wildcard Permissions Excluded**: Segment-aware hierarchy checks (e.g. `worldprotect.bypass.flag.break-block` matches `worldprotect.bypass.flag.*` if implemented via prefixes) must use segment-aware logic via `PermissionKey.startsWith`, but general wildcard symbols like `*` are not supported.
