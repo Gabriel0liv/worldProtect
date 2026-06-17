@@ -30,8 +30,28 @@ public final class BuildSemanticsTest {
     }
 
     @Test
-    public void testBlockInteractNotBuildRelated() {
-        assertFalse(BuildSemantics.isBuildRelated(ProtectionAction.BLOCK_INTERACT));
+    public void testBlockInteractIsBuildRelated() {
+        assertTrue(BuildSemantics.isBuildRelated(ProtectionAction.BLOCK_INTERACT));
+    }
+
+    @Test
+    public void testItemUseOnBlockIsBuildRelated() {
+        assertTrue(BuildSemantics.isBuildRelated(ProtectionAction.ITEM_USE_ON_BLOCK));
+    }
+
+    @Test
+    public void testPistonMoveIsBuildRelated() {
+        assertTrue(BuildSemantics.isBuildRelated(ProtectionAction.PISTON_MOVE));
+    }
+
+    @Test
+    public void testFluidSpreadIsBuildRelated() {
+        assertTrue(BuildSemantics.isBuildRelated(ProtectionAction.FLUID_SPREAD));
+    }
+
+    @Test
+    public void testExplosionBlockDamageIsBuildRelated() {
+        assertTrue(BuildSemantics.isBuildRelated(ProtectionAction.EXPLOSION_BLOCK_DAMAGE));
     }
 
     @Test
@@ -47,11 +67,6 @@ public final class BuildSemanticsTest {
     @Test
     public void testEntityDamageNotBuildRelated() {
         assertFalse(BuildSemantics.isBuildRelated(ProtectionAction.ENTITY_DAMAGE));
-    }
-
-    @Test
-    public void testFluidSpreadNotBuildRelated() {
-        assertFalse(BuildSemantics.isBuildRelated(ProtectionAction.FLUID_SPREAD));
     }
 
     @Test
@@ -73,6 +88,36 @@ public final class BuildSemanticsTest {
     }
 
     @Test
+    public void testSpecificFlagsForBlockInteract() {
+        List<FlagKey> flags = BuildSemantics.specificFlagsFor(ProtectionAction.BLOCK_INTERACT);
+        assertEquals(List.of(BuiltInFlags.INTERACT_BLOCK_KEY), flags);
+    }
+
+    @Test
+    public void testSpecificFlagsForItemUseOnBlock() {
+        List<FlagKey> flags = BuildSemantics.specificFlagsFor(ProtectionAction.ITEM_USE_ON_BLOCK);
+        assertEquals(List.of(BuiltInFlags.USE_ITEM_ON_BLOCK_KEY, BuiltInFlags.USE_ITEM_KEY), flags);
+    }
+
+    @Test
+    public void testSpecificFlagsForPistonMove() {
+        List<FlagKey> flags = BuildSemantics.specificFlagsFor(ProtectionAction.PISTON_MOVE);
+        assertEquals(List.of(BuiltInFlags.PISTON_MOVE_KEY), flags);
+    }
+
+    @Test
+    public void testSpecificFlagsForFluidSpread() {
+        List<FlagKey> flags = BuildSemantics.specificFlagsFor(ProtectionAction.FLUID_SPREAD);
+        assertEquals(List.of(BuiltInFlags.FLUID_SPREAD_KEY), flags);
+    }
+
+    @Test
+    public void testSpecificFlagsForExplosionBlockDamage() {
+        List<FlagKey> flags = BuildSemantics.specificFlagsFor(ProtectionAction.EXPLOSION_BLOCK_DAMAGE);
+        assertEquals(List.of(BuiltInFlags.EXPLOSION_BREAK_BLOCKS_KEY), flags);
+    }
+
+    @Test
     public void testSpecificFlagsForBuildIsEmpty() {
         List<FlagKey> flags = BuildSemantics.specificFlagsFor(ProtectionAction.BUILD);
         assertTrue(flags.isEmpty());
@@ -81,7 +126,7 @@ public final class BuildSemanticsTest {
     @Test
     public void testSpecificFlagsForNonBuildThrows() {
         assertThrows(IllegalArgumentException.class,
-                () -> BuildSemantics.specificFlagsFor(ProtectionAction.BLOCK_INTERACT));
+                () -> BuildSemantics.specificFlagsFor(ProtectionAction.CONTAINER_OPEN));
     }
 
     @Test
@@ -89,6 +134,11 @@ public final class BuildSemanticsTest {
         assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.BLOCK_BREAK));
         assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.BLOCK_PLACE));
         assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.BLOCK_MODIFY));
+        assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.BLOCK_INTERACT));
+        assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.ITEM_USE_ON_BLOCK));
+        assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.PISTON_MOVE));
+        assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.FLUID_SPREAD));
+        assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.EXPLOSION_BLOCK_DAMAGE));
         assertTrue(BuildSemantics.usesBuildFallback(ProtectionAction.BUILD));
     }
 
@@ -101,10 +151,16 @@ public final class BuildSemanticsTest {
     @Test
     public void testAllSpecificFlags() {
         List<FlagKey> all = BuildSemantics.allSpecificFlags();
-        assertEquals(3, all.size());
+        assertEquals(9, all.size());
         assertTrue(all.contains(BuiltInFlags.BREAK_BLOCK_KEY));
         assertTrue(all.contains(BuiltInFlags.PLACE_BLOCK_KEY));
         assertTrue(all.contains(BuiltInFlags.MODIFY_BLOCK_KEY));
+        assertTrue(all.contains(BuiltInFlags.INTERACT_BLOCK_KEY));
+        assertTrue(all.contains(BuiltInFlags.USE_ITEM_ON_BLOCK_KEY));
+        assertTrue(all.contains(BuiltInFlags.USE_ITEM_KEY));
+        assertTrue(all.contains(BuiltInFlags.PISTON_MOVE_KEY));
+        assertTrue(all.contains(BuiltInFlags.FLUID_SPREAD_KEY));
+        assertTrue(all.contains(BuiltInFlags.EXPLOSION_BREAK_BLOCKS_KEY));
     }
 
     @Test

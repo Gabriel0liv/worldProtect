@@ -73,6 +73,14 @@ public final class ProtectionResolverBuildTest {
         return new ProtectionQuery(actor, action, causeChain, ProtectionTarget.unknown(), overworld, pos);
     }
 
+    private Region cuboidRegionWithFlags(String id, Map<dev.sato.worldprotect.protection.flag.FlagKey, FlagRule> flags) {
+        return new CuboidRegion(
+                RegionId.of(id), overworld, min, max, 100,
+                RegionFlags.ofRules(flags),
+                RegionSubjects.empty(), RegionAccessPolicy.defaults(), Optional.empty()
+        );
+    }
+
     // === STEP 1: Specific flags override build fallback ===
 
     @Test
@@ -159,6 +167,121 @@ public final class ProtectionResolverBuildTest {
 
         ProtectionDecision d = resolver.resolve(query(ProtectionAction.BLOCK_BREAK), set);
         assertTrue(d.isDenied(), "Passthrough=allow must NOT skip specific break-block=deny");
+    }
+
+    @Test
+    public void testBuildDenyDeniesBlockInteractWhenSpecificFlagAbsent() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.BLOCK_INTERACT), set);
+        assertTrue(d.isDenied(), "build=deny should deny BLOCK_INTERACT when interact-block is absent");
+    }
+
+    @Test
+    public void testInteractBlockAllowOverridesBuildDeny() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.INTERACT_BLOCK_KEY, FlagRule.simple(FlagState.ALLOW),
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.BLOCK_INTERACT), set);
+        assertTrue(d.isAllowed(), "interact-block=allow should override build=deny");
+    }
+
+    @Test
+    public void testBuildDenyDeniesItemUseOnBlockWhenSpecificFlagsAbsent() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.ITEM_USE_ON_BLOCK), set);
+        assertTrue(d.isDenied(), "build=deny should deny ITEM_USE_ON_BLOCK when use-item-on-block/use-item are absent");
+    }
+
+    @Test
+    public void testUseItemDenyOverridesBuildAllowForItemUseOnBlock() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.USE_ITEM_KEY, FlagRule.simple(FlagState.DENY),
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.ALLOW)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.ITEM_USE_ON_BLOCK), set);
+        assertTrue(d.isDenied(), "use-item=deny should override build=allow for ITEM_USE_ON_BLOCK");
+    }
+
+    @Test
+    public void testBuildDenyDeniesPistonMoveWhenSpecificFlagAbsent() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.PISTON_MOVE), set);
+        assertTrue(d.isDenied(), "build=deny should deny PISTON_MOVE when piston-move is absent");
+    }
+
+    @Test
+    public void testBuildDenyDeniesFluidSpreadWhenSpecificFlagAbsent() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.FLUID_SPREAD), set);
+        assertTrue(d.isDenied(), "build=deny should deny FLUID_SPREAD when fluid-spread is absent");
+    }
+
+    @Test
+    public void testBuildDenyDeniesExplosionBlockDamageWhenSpecificFlagAbsent() {
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY)
+        ))));
+
+        ProtectionDecision d = resolver.resolve(query(ProtectionAction.EXPLOSION_BLOCK_DAMAGE), set);
+        assertTrue(d.isDenied(), "build=deny should deny EXPLOSION_BLOCK_DAMAGE when explosion-break-blocks is absent");
+    }
+
+    @Test
+    public void testPassthroughAllowSkipsBuildFallbackForExpandedBuildActions() {
+        List<ProtectionAction> actions = List.of(
+                ProtectionAction.BLOCK_INTERACT,
+                ProtectionAction.ITEM_USE_ON_BLOCK,
+                ProtectionAction.PISTON_MOVE,
+                ProtectionAction.FLUID_SPREAD,
+                ProtectionAction.EXPLOSION_BLOCK_DAMAGE
+        );
+        RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                BuiltInFlags.BUILD_KEY, FlagRule.simple(FlagState.DENY),
+                BuiltInFlags.PASSTHROUGH_KEY, FlagRule.simple(FlagState.ALLOW)
+        ))));
+
+        for (ProtectionAction action : actions) {
+            ProtectionDecision d = resolver.resolve(query(action), set);
+            assertTrue(d.isPass(), "passthrough=allow should skip build fallback for " + action);
+        }
+    }
+
+    @Test
+    public void testPassthroughAllowDoesNotSkipExpandedSpecificFlags() {
+        record Case(ProtectionAction action, dev.sato.worldprotect.protection.flag.FlagKey flagKey) {}
+
+        List<Case> cases = List.of(
+                new Case(ProtectionAction.BLOCK_INTERACT, BuiltInFlags.INTERACT_BLOCK_KEY),
+                new Case(ProtectionAction.ITEM_USE_ON_BLOCK, BuiltInFlags.USE_ITEM_ON_BLOCK_KEY),
+                new Case(ProtectionAction.PISTON_MOVE, BuiltInFlags.PISTON_MOVE_KEY),
+                new Case(ProtectionAction.FLUID_SPREAD, BuiltInFlags.FLUID_SPREAD_KEY),
+                new Case(ProtectionAction.EXPLOSION_BLOCK_DAMAGE, BuiltInFlags.EXPLOSION_BREAK_BLOCKS_KEY)
+        );
+
+        for (Case testCase : cases) {
+            RegionSet set = RegionSet.of(List.of(cuboidRegionWithFlags("spawn", Map.of(
+                    testCase.flagKey(), FlagRule.simple(FlagState.DENY),
+                    BuiltInFlags.PASSTHROUGH_KEY, FlagRule.simple(FlagState.ALLOW)
+            ))));
+
+            ProtectionDecision d = resolver.resolve(query(testCase.action()), set);
+            assertTrue(d.isDenied(), "passthrough=allow must not skip specific flag for " + testCase.action());
+        }
     }
 
     @Test

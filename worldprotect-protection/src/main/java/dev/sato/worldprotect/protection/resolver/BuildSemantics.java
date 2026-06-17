@@ -12,9 +12,10 @@ import java.util.Set;
  * Utility class for identifying build-related actions, their specific flags,
  * and determining whether an action falls back to the generic build flag.
  *
- * <p>Build-related actions are those which modify the world (break, place, modify blocks).
- * Non-build actions (e.g., block interact, item use, container open) are not build-related
- * and are never resolved through build fallback or implicit membership protection.</p>
+ * <p>Build-related actions are those that modify the world or act directly on blocks in a way
+ * that should inherit build fallback semantics. Non-build actions (e.g., container open,
+ * item use on entities) are never resolved through build fallback or implicit membership
+ * protection.</p>
  */
 public final class BuildSemantics {
 
@@ -26,7 +27,12 @@ public final class BuildSemantics {
             ProtectionAction.BUILD,
             ProtectionAction.BLOCK_BREAK,
             ProtectionAction.BLOCK_PLACE,
-            ProtectionAction.BLOCK_MODIFY
+            ProtectionAction.BLOCK_MODIFY,
+            ProtectionAction.BLOCK_INTERACT,
+            ProtectionAction.ITEM_USE_ON_BLOCK,
+            ProtectionAction.PISTON_MOVE,
+            ProtectionAction.FLUID_SPREAD,
+            ProtectionAction.EXPLOSION_BLOCK_DAMAGE
     );
 
     private BuildSemantics() {}
@@ -59,6 +65,16 @@ public final class BuildSemantics {
                 return List.of(BuiltInFlags.PLACE_BLOCK_KEY);
             case BLOCK_MODIFY:
                 return List.of(BuiltInFlags.MODIFY_BLOCK_KEY);
+            case BLOCK_INTERACT:
+                return List.of(BuiltInFlags.INTERACT_BLOCK_KEY);
+            case ITEM_USE_ON_BLOCK:
+                return List.of(BuiltInFlags.USE_ITEM_ON_BLOCK_KEY, BuiltInFlags.USE_ITEM_KEY);
+            case PISTON_MOVE:
+                return List.of(BuiltInFlags.PISTON_MOVE_KEY);
+            case FLUID_SPREAD:
+                return List.of(BuiltInFlags.FLUID_SPREAD_KEY);
+            case EXPLOSION_BLOCK_DAMAGE:
+                return List.of(BuiltInFlags.EXPLOSION_BREAK_BLOCKS_KEY);
             case BUILD:
                 return List.of();
             default:
@@ -87,7 +103,13 @@ public final class BuildSemantics {
         return List.of(
                 BuiltInFlags.BREAK_BLOCK_KEY,
                 BuiltInFlags.PLACE_BLOCK_KEY,
-                BuiltInFlags.MODIFY_BLOCK_KEY
+                BuiltInFlags.MODIFY_BLOCK_KEY,
+                BuiltInFlags.INTERACT_BLOCK_KEY,
+                BuiltInFlags.USE_ITEM_ON_BLOCK_KEY,
+                BuiltInFlags.USE_ITEM_KEY,
+                BuiltInFlags.PISTON_MOVE_KEY,
+                BuiltInFlags.FLUID_SPREAD_KEY,
+                BuiltInFlags.EXPLOSION_BREAK_BLOCKS_KEY
         );
     }
 }
