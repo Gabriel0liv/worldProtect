@@ -11,11 +11,7 @@ public final class SubjectRefConfig {
     private final String rawValue;
 
     private SubjectRefConfig(String rawValue) {
-        Objects.requireNonNull(rawValue, "rawValue must not be null");
-        if (rawValue.trim().isEmpty()) {
-            throw new IllegalArgumentException("rawValue must not be blank");
-        }
-        this.rawValue = rawValue;
+        this.rawValue = Objects.requireNonNull(rawValue, "rawValue must not be null");
     }
 
     public static SubjectRefConfig of(String rawValue) {
@@ -29,6 +25,10 @@ public final class SubjectRefConfig {
     public ConfigValidationResult validate(String path) {
         Objects.requireNonNull(path, "path must not be null");
         ConfigValidationResult result = ConfigValidationResult.ok();
+
+        if (rawValue.trim().isEmpty()) {
+            return result.add(ConfigValidationMessage.error(path, "Subject reference must not be empty or blank"));
+        }
 
         if (rawValue.equalsIgnoreCase("console")) {
             if (!rawValue.equals("console")) {

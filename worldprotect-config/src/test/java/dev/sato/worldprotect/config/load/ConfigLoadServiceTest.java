@@ -459,4 +459,26 @@ public final class ConfigLoadServiceTest {
         assertEquals(1, loaded.regionSet().regions().size());
         assertTrue(loaded.regionSet().regions().get(0) instanceof dev.sato.worldprotect.protection.region.GlobalRegion);
     }
+
+    @Test
+    public void testLoadConfigWithBlankSubjectsFails() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n" +
+                "[regions.spawn.subjects]\n" +
+                "owners = [\"\"]\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertTrue(result.diagnostics().messages().stream()
+                .anyMatch(msg -> msg.path().contains("owners[0]") && msg.message().contains("must not be empty or blank")));
+    }
 }

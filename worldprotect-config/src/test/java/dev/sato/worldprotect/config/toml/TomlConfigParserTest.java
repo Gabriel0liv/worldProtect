@@ -653,4 +653,29 @@ public final class TomlConfigParserTest {
         assertTrue(result.hasErrors());
         assertEquals("regions.global_overworld.bounds", result.diagnostics().errors().get(0).path());
     }
+
+    @Test
+    public void testParserAllowsBlankSubjectsButFailsValidation() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.subjects]\n" +
+                "owners = [\"\"]\n" +
+                "members = [\"   \"]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+
+        WorldProtectConfig config = result.config().get();
+        ConfigValidationResult validation = config.validate(registry);
+        assertFalse(validation.isValid());
+        assertEquals(2, validation.errors().size());
+        assertTrue(validation.errors().stream().anyMatch(e -> e.path().contains("owners[0]")));
+        assertTrue(validation.errors().stream().anyMatch(e -> e.path().contains("members[0]")));
+    }
 }

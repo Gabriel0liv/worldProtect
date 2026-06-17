@@ -111,9 +111,17 @@ public final class SubjectRefConfigTest {
     }
 
     @Test
-    public void testBlankStringRejectedOnCreation() {
+    public void testBlankStringAllowedOnCreationButFailsValidation() {
         assertThrows(NullPointerException.class, () -> SubjectRefConfig.of(null));
-        assertThrows(IllegalArgumentException.class, () -> SubjectRefConfig.of(""));
-        assertThrows(IllegalArgumentException.class, () -> SubjectRefConfig.of("   "));
+
+        SubjectRefConfig config1 = SubjectRefConfig.of("");
+        ConfigValidationResult result1 = config1.validate("test.path");
+        assertFalse(result1.isValid());
+        assertTrue(result1.errors().get(0).message().contains("must not be empty or blank"));
+
+        SubjectRefConfig config2 = SubjectRefConfig.of("   ");
+        ConfigValidationResult result2 = config2.validate("test.path2");
+        assertFalse(result2.isValid());
+        assertTrue(result2.errors().get(0).message().contains("must not be empty or blank"));
     }
 }
