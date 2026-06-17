@@ -1,5 +1,6 @@
 package dev.sato.worldprotect.protection.permission;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -13,7 +14,7 @@ public final class PermissionKey {
         if (value.length() < 1 || value.length() > 128) {
             throw new IllegalArgumentException("Permission key length must be between 1 and 128 characters");
         }
-        if (!value.equals(value.toLowerCase())) {
+        if (!value.equals(value.toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException("Permission key must be lowercase: " + value);
         }
         if (value.startsWith(".") || value.endsWith(".") || value.contains("..")) {

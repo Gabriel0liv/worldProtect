@@ -110,19 +110,25 @@ public final class ProtectionResolver {
                             boolean bypassed = false;
                             if (subjectContext != null) {
                                 dev.sato.worldprotect.protection.subject.RegionRole role = dev.sato.worldprotect.protection.subject.SubjectResolver.roleInRegion(subjectContext, region);
-                                if (role == dev.sato.worldprotect.protection.subject.RegionRole.OWNER && region.accessPolicy().ownerBypasses(flagKey)) {
+                                boolean isOwnerRoleBypass = role == dev.sato.worldprotect.protection.subject.RegionRole.OWNER && region.accessPolicy().ownerBypasses(flagKey);
+                                boolean isMemberRoleBypass = role == dev.sato.worldprotect.protection.subject.RegionRole.MEMBER && region.accessPolicy().memberBypasses(flagKey);
+
+                                boolean isOwnerPermissionBypass = dev.sato.worldprotect.protection.subject.SubjectResolver.hasRegionOwnerBypass(subjectContext, region.getId()) && region.accessPolicy().ownerBypasses(flagKey);
+                                boolean isMemberPermissionBypass = dev.sato.worldprotect.protection.subject.SubjectResolver.hasRegionMemberBypass(subjectContext, region.getId()) && region.accessPolicy().memberBypasses(flagKey);
+
+                                if (isOwnerRoleBypass || isOwnerPermissionBypass) {
                                     bypassed = true;
                                     hasAllow = true;
                                     if (allowRegion == null) {
                                         allowRegion = region;
-                                        allowSource = "region owner bypass";
+                                        allowSource = isOwnerRoleBypass ? "region owner bypass" : "region owner bypass permission";
                                     }
-                                } else if (role == dev.sato.worldprotect.protection.subject.RegionRole.MEMBER && region.accessPolicy().memberBypasses(flagKey)) {
+                                } else if (isMemberRoleBypass || isMemberPermissionBypass) {
                                     bypassed = true;
                                     hasAllow = true;
                                     if (allowRegion == null) {
                                         allowRegion = region;
-                                        allowSource = "region member bypass";
+                                        allowSource = isMemberRoleBypass ? "region member bypass" : "region member bypass permission";
                                     }
                                 }
                             }

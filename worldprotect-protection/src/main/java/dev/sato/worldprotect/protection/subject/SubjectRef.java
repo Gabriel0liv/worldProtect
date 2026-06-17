@@ -1,5 +1,6 @@
 package dev.sato.worldprotect.protection.subject;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,13 +27,13 @@ public final class SubjectRef {
                 } catch (IllegalArgumentException e) {
                     throw new IllegalArgumentException("Invalid UUID format for player subject ID: " + id, e);
                 }
-                this.id = id.toLowerCase();
+                this.id = id.toLowerCase(Locale.ROOT);
                 break;
             case GROUP:
                 if (id.length() < 1 || id.length() > 64) {
                     throw new IllegalArgumentException("Group ID length must be between 1 and 64 characters");
                 }
-                if (!id.equals(id.toLowerCase())) {
+                if (!id.equals(id.toLowerCase(Locale.ROOT))) {
                     throw new IllegalArgumentException("Group ID must be lowercase: " + id);
                 }
                 for (int i = 0; i < id.length(); i++) {
@@ -67,7 +68,7 @@ public final class SubjectRef {
 
     public static SubjectRef player(UUID uuid) {
         Objects.requireNonNull(uuid, "uuid must not be null");
-        return new SubjectRef(SubjectType.PLAYER, uuid.toString().toLowerCase());
+        return new SubjectRef(SubjectType.PLAYER, uuid.toString().toLowerCase(Locale.ROOT));
     }
 
     public static SubjectRef group(String name) {
