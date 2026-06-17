@@ -2,7 +2,6 @@ package dev.sato.worldprotect.config.load;
 
 import dev.sato.worldprotect.config.toml.TomlConfigParseResult;
 import dev.sato.worldprotect.config.toml.TomlConfigParser;
-import dev.sato.worldprotect.protection.config.ConfigValidationResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;

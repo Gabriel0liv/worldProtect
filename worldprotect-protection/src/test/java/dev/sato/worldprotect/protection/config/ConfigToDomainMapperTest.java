@@ -6,7 +6,6 @@ import dev.sato.worldprotect.minecraft.BlockPosRef;
 import dev.sato.worldprotect.minecraft.DimensionRef;
 import dev.sato.worldprotect.minecraft.ResourceRef;
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
-import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagState;
 import dev.sato.worldprotect.protection.region.CuboidRegion;
 import dev.sato.worldprotect.protection.region.RegionId;

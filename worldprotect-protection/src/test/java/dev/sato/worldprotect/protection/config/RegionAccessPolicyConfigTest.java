@@ -1,7 +1,6 @@
 package dev.sato.worldprotect.protection.config;
 
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
-import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagRegistry;
 import dev.sato.worldprotect.protection.subject.RegionAccessPolicy;
 import org.junit.jupiter.api.BeforeEach;

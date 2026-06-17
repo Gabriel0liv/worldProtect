@@ -9,7 +9,6 @@ import dev.sato.worldprotect.protection.config.ConfigResourceValidator;
 import dev.sato.worldprotect.protection.config.ConfigToDomainMapper;
 import dev.sato.worldprotect.protection.config.ConfigValidationResult;
 import dev.sato.worldprotect.protection.config.FlagRuleConfig;
-import dev.sato.worldprotect.protection.config.RegionConfig;
 import dev.sato.worldprotect.protection.config.WorldProtectConfig;
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
 import dev.sato.worldprotect.protection.flag.FlagKey;

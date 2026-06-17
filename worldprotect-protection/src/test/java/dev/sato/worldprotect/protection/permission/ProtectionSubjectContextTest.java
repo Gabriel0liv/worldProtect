@@ -6,7 +6,6 @@ import dev.sato.worldprotect.protection.subject.ActorSubjects;
 import dev.sato.worldprotect.protection.subject.SubjectRef;
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class ProtectionSubjectContextTest {

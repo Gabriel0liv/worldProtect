@@ -9,7 +9,6 @@ import dev.sato.worldprotect.protection.query.CauseChain;
 import dev.sato.worldprotect.protection.query.ProtectionCause;
 import dev.sato.worldprotect.protection.query.ProtectionAction;
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
-import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagState;
 import dev.sato.worldprotect.protection.permission.PermissionSet;
 import dev.sato.worldprotect.protection.permission.ProtectionSubjectContext;
