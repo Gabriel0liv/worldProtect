@@ -491,4 +491,112 @@ public final class TomlConfigParserTest {
         assertTrue(flags.get(BuiltInFlags.BREAK_BLOCK_KEY).isSimple());
         assertFalse(flags.get(BuiltInFlags.USE_ITEM_KEY).isSimple());
     }
+
+    @Test
+    public void testParsesSubjectsSuccessfully() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.subjects]\n" +
+                "owners = [\"player:00000000-0000-0000-0000-000000000000\"]\n" +
+                "members = [\"group:trusted\", \"console\", \"system\"]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+
+        WorldProtectConfig config = result.config().get();
+        var subjects = config.regions().get(0).subjectsConfig();
+        assertEquals(1, subjects.owners().size());
+        assertEquals("player:00000000-0000-0000-0000-000000000000", subjects.owners().get(0).rawValue());
+        assertEquals(3, subjects.members().size());
+        assertEquals("group:trusted", subjects.members().get(0).rawValue());
+        assertEquals("console", subjects.members().get(1).rawValue());
+        assertEquals("system", subjects.members().get(2).rawValue());
+    }
+
+    @Test
+    public void testParsesAccessPolicySuccessfully() {
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.access]\n" +
+                "owners-bypass = false\n" +
+                "members-bypass = true\n" +
+                "owner-bypass-flags = [\"break-block\"]\n" +
+                "member-bypass-flags = [\"place-block\"]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+
+        WorldProtectConfig config = result.config().get();
+        var access = config.regions().get(0).accessPolicyConfig();
+        assertEquals(false, access.ownersBypass());
+        assertEquals(true, access.membersBypass());
+        assertEquals(List.of("break-block"), access.ownerBypassFlags());
+        assertEquals(List.of("place-block"), access.memberBypassFlags());
+    }
+
+    @Test
+    public void testInvalidSubjectsOrAccessPolicyDiagnostics() {
+        // Test owners not being an array
+        String toml1 =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.subjects]\n" +
+                "owners = \"not-an-array\"\n";
+
+        TomlConfigParseResult result1 = parser.parseString(toml1);
+        assertFalse(result1.isSuccess());
+        assertTrue(result1.hasErrors());
+        assertEquals("regions.spawn.subjects.owners", result1.diagnostics().errors().get(0).path());
+
+        // Test owners array contains non-string
+        String toml2 =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.subjects]\n" +
+                "owners = [123]\n";
+
+        TomlConfigParseResult result2 = parser.parseString(toml2);
+        assertFalse(result2.isSuccess());
+        assertTrue(result2.hasErrors());
+        assertEquals("regions.spawn.subjects.owners[0]", result2.diagnostics().errors().get(0).path());
+
+        // Test owners-bypass wrong type
+        String toml3 =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 100\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n" +
+                "[regions.spawn.access]\n" +
+                "owners-bypass = \"yes\"\n";
+
+        TomlConfigParseResult result3 = parser.parseString(toml3);
+        assertFalse(result3.isSuccess());
+        assertTrue(result3.hasErrors());
+        assertEquals("regions.spawn.access.owners-bypass", result3.diagnostics().errors().get(0).path());
+    }
 }

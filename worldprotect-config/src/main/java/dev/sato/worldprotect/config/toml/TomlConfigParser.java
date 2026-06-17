@@ -8,6 +8,9 @@ import dev.sato.worldprotect.protection.config.ConfigValidationMessage;
 import dev.sato.worldprotect.protection.config.ConfigValidationResult;
 import dev.sato.worldprotect.protection.config.FlagRuleConfig;
 import dev.sato.worldprotect.protection.config.RegionConfig;
+import dev.sato.worldprotect.protection.config.RegionSubjectsConfig;
+import dev.sato.worldprotect.protection.config.RegionAccessPolicyConfig;
+import dev.sato.worldprotect.protection.config.SubjectRefConfig;
 import dev.sato.worldprotect.protection.config.WorldProtectConfig;
 import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagState;
@@ -119,8 +122,10 @@ public final class TomlConfigParser {
                     boundsValid = false;
                 }
 
-                TomlArray minArray = boundsTable.getArray("min");
-                TomlArray maxArray = boundsTable.getArray("max");
+                Object minVal = boundsTable.get("min");
+                TomlArray minArray = (minVal instanceof TomlArray) ? (TomlArray) minVal : null;
+                Object maxVal = boundsTable.get("max");
+                TomlArray maxArray = (maxVal instanceof TomlArray) ? (TomlArray) maxVal : null;
 
                 ConfigValidationResult[] minDiagRef = new ConfigValidationResult[]{ConfigValidationResult.ok()};
                 BlockPosRef minPos = parseCoordinates(minArray, "regions." + regionKey + ".bounds.min", minDiagRef);
@@ -184,12 +189,13 @@ public final class TomlConfigParser {
 
                         List<String> allowList = new ArrayList<>();
                         if (condTable.contains("allow")) {
-                            TomlArray allowArray = condTable.getArray("allow");
-                            if (allowArray == null) {
+                            Object allowObj = condTable.get("allow");
+                            if (!(allowObj instanceof TomlArray)) {
                                 diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".allow", "allow must be an array of strings"));
                                 regionValid = false;
                                 continue;
                             }
+                            TomlArray allowArray = (TomlArray) allowObj;
                             boolean listValid = true;
                             for (int i = 0; i < allowArray.size(); i++) {
                                 Object item = allowArray.get(i);
@@ -208,12 +214,13 @@ public final class TomlConfigParser {
 
                         List<String> denyList = new ArrayList<>();
                         if (condTable.contains("deny")) {
-                            TomlArray denyArray = condTable.getArray("deny");
-                            if (denyArray == null) {
+                            Object denyObj = condTable.get("deny");
+                            if (!(denyObj instanceof TomlArray)) {
                                 diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".flags." + flagKeyStr + ".deny", "deny must be an array of strings"));
                                 regionValid = false;
                                 continue;
                             }
+                            TomlArray denyArray = (TomlArray) denyObj;
                             boolean listValid = true;
                             for (int i = 0; i < denyArray.size(); i++) {
                                 Object item = denyArray.get(i);
@@ -243,8 +250,144 @@ public final class TomlConfigParser {
                 }
             }
 
+            // 6. Subjects validation
+            RegionSubjectsConfig subjectsConfig = RegionSubjectsConfig.empty();
+            TomlTable subjectsTable = region.getTable("subjects");
+            if (subjectsTable != null) {
+                List<SubjectRefConfig> ownersList = new ArrayList<>();
+                if (subjectsTable.contains("owners")) {
+                    Object val = subjectsTable.get("owners");
+                    if (!(val instanceof TomlArray)) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".subjects.owners", "owners must be an array of strings"));
+                        regionValid = false;
+                    } else {
+                        TomlArray ownersArray = (TomlArray) val;
+                        boolean listValid = true;
+                        for (int i = 0; i < ownersArray.size(); i++) {
+                            Object item = ownersArray.get(i);
+                            if (!(item instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".subjects.owners[" + i + "]", "owners array must contain strings"));
+                                listValid = false;
+                                break;
+                            }
+                            ownersList.add(SubjectRefConfig.of((String) item));
+                        }
+                        if (!listValid) {
+                            regionValid = false;
+                        }
+                    }
+                }
+
+                List<SubjectRefConfig> membersList = new ArrayList<>();
+                if (subjectsTable.contains("members")) {
+                    Object val = subjectsTable.get("members");
+                    if (!(val instanceof TomlArray)) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".subjects.members", "members must be an array of strings"));
+                        regionValid = false;
+                    } else {
+                        TomlArray membersArray = (TomlArray) val;
+                        boolean listValid = true;
+                        for (int i = 0; i < membersArray.size(); i++) {
+                            Object item = membersArray.get(i);
+                            if (!(item instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".subjects.members[" + i + "]", "members array must contain strings"));
+                                listValid = false;
+                                break;
+                            }
+                            membersList.add(SubjectRefConfig.of((String) item));
+                        }
+                        if (!listValid) {
+                            regionValid = false;
+                        }
+                    }
+                }
+
+                if (regionValid) {
+                    subjectsConfig = RegionSubjectsConfig.of(ownersList, membersList);
+                }
+            }
+
+            // 7. Access policy validation
+            RegionAccessPolicyConfig accessPolicyConfig = RegionAccessPolicyConfig.defaults();
+            TomlTable accessTable = region.getTable("access");
+            if (accessTable != null) {
+                Boolean ownersBypass = null;
+                if (accessTable.contains("owners-bypass")) {
+                    Object val = accessTable.get("owners-bypass");
+                    if (!(val instanceof Boolean)) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".access.owners-bypass", "owners-bypass must be a boolean"));
+                        regionValid = false;
+                    } else {
+                        ownersBypass = (Boolean) val;
+                    }
+                }
+
+                Boolean membersBypass = null;
+                if (accessTable.contains("members-bypass")) {
+                    Object val = accessTable.get("members-bypass");
+                    if (!(val instanceof Boolean)) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".access.members-bypass", "members-bypass must be a boolean"));
+                        regionValid = false;
+                    } else {
+                        membersBypass = (Boolean) val;
+                    }
+                }
+
+                List<String> ownerBypassFlags = new ArrayList<>();
+                if (accessTable.contains("owner-bypass-flags")) {
+                    Object val = accessTable.get("owner-bypass-flags");
+                    if (!(val instanceof TomlArray)) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".access.owner-bypass-flags", "owner-bypass-flags must be an array of strings"));
+                        regionValid = false;
+                    } else {
+                        TomlArray array = (TomlArray) val;
+                        boolean listValid = true;
+                        for (int i = 0; i < array.size(); i++) {
+                            Object item = array.get(i);
+                            if (!(item instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".access.owner-bypass-flags[" + i + "]", "owner-bypass-flags array must contain strings"));
+                                listValid = false;
+                                break;
+                            }
+                            ownerBypassFlags.add((String) item);
+                        }
+                        if (!listValid) {
+                            regionValid = false;
+                        }
+                    }
+                }
+
+                List<String> memberBypassFlags = new ArrayList<>();
+                if (accessTable.contains("member-bypass-flags")) {
+                    Object val = accessTable.get("member-bypass-flags");
+                    if (!(val instanceof TomlArray)) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".access.member-bypass-flags", "member-bypass-flags must be an array of strings"));
+                        regionValid = false;
+                    } else {
+                        TomlArray array = (TomlArray) val;
+                        boolean listValid = true;
+                        for (int i = 0; i < array.size(); i++) {
+                            Object item = array.get(i);
+                            if (!(item instanceof String)) {
+                                diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".access.member-bypass-flags[" + i + "]", "member-bypass-flags array must contain strings"));
+                                listValid = false;
+                                break;
+                            }
+                            memberBypassFlags.add((String) item);
+                        }
+                        if (!listValid) {
+                            regionValid = false;
+                        }
+                    }
+                }
+
+                if (regionValid) {
+                    accessPolicyConfig = RegionAccessPolicyConfig.of(ownersBypass, membersBypass, ownerBypassFlags, memberBypassFlags);
+                }
+            }
+
             if (regionValid) {
-                regionsList.add(RegionConfig.of(regionId, dimension, priority, boundsConfig, flagsMap));
+                regionsList.add(RegionConfig.of(regionId, dimension, priority, boundsConfig, flagsMap, subjectsConfig, accessPolicyConfig));
             }
         }
 

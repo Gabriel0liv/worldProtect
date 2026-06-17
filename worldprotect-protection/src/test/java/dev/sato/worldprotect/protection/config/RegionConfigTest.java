@@ -117,4 +117,35 @@ public final class RegionConfigTest {
             config.flags().put(BuiltInFlags.PLACE_BLOCK_KEY, FlagRuleConfig.simple(FlagState.ALLOW));
         });
     }
+
+    @Test
+    public void testDefaultsOnOldFactoryMethod() {
+        RegionConfig config = RegionConfig.of(regionId, overworld, 100, validBounds, Map.of());
+        assertEquals(RegionSubjectsConfig.empty(), config.subjectsConfig());
+        assertEquals(RegionAccessPolicyConfig.defaults(), config.accessPolicyConfig());
+    }
+
+    @Test
+    public void testSubjectsAndAccessValidationMerged() {
+        // Subjects config with invalid player UUID
+        RegionSubjectsConfig subjects = RegionSubjectsConfig.of(
+                List.of(SubjectRefConfig.of("player:invalid-uuid")),
+                List.of()
+        );
+        // Access policy config with unknown flag
+        RegionAccessPolicyConfig access = RegionAccessPolicyConfig.of(
+                true,
+                false,
+                List.of("unknown-flag-name"),
+                List.of()
+        );
+
+        RegionConfig config = RegionConfig.of(regionId, overworld, 100, validBounds, Map.of(), subjects, access);
+
+        ConfigValidationResult result = config.validate(registry);
+        assertFalse(result.isValid());
+        // Should contain error for invalid UUID and error for unknown flag
+        assertTrue(result.errors().stream().anyMatch(m -> m.path().equals("regions.spawn.subjects.owners[0]")));
+        assertTrue(result.errors().stream().anyMatch(m -> m.path().equals("regions.spawn.access.owner-bypass-flags[0]")));
+    }
 }

@@ -44,7 +44,9 @@ public final class ConfigToDomainMapper {
                 bounds.min(),
                 bounds.max(),
                 regionConfig.priority(),
-                domainFlags
+                domainFlags,
+                regionConfig.subjectsConfig().toDomain(),
+                regionConfig.accessPolicyConfig().toDomain()
         );
     }
 

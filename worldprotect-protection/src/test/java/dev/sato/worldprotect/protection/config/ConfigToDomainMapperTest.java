@@ -21,10 +21,12 @@ import dev.sato.worldprotect.protection.query.ProtectionCause;
 import dev.sato.worldprotect.protection.query.ProtectionQuery;
 import dev.sato.worldprotect.protection.query.ProtectionTarget;
 import dev.sato.worldprotect.protection.resolver.ProtectionResolver;
+import dev.sato.worldprotect.protection.subject.SubjectRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class ConfigToDomainMapperTest {
@@ -129,5 +131,65 @@ public final class ConfigToDomainMapperTest {
         assertThrows(IllegalArgumentException.class, () -> {
             mapper.toFlagRule(config);
         });
+    }
+
+    @Test
+    public void testMapsSubjectsAndAccessPolicyIntoCuboidRegion() {
+        UUID ownerUuid = UUID.randomUUID();
+        RegionSubjectsConfig subjects = RegionSubjectsConfig.of(
+                List.of(SubjectRefConfig.of("player:" + ownerUuid)),
+                List.of(SubjectRefConfig.of("group:trusted"))
+        );
+        RegionAccessPolicyConfig access = RegionAccessPolicyConfig.of(
+                false,
+                true,
+                List.of("break-block"),
+                List.of("place-block")
+        );
+
+        RegionConfig rConfig = RegionConfig.of(RegionId.of("spawn"), overworld, 100, bounds, Map.of(), subjects, access);
+        WorldProtectConfig wpConfig = WorldProtectConfig.of(List.of(rConfig));
+
+        RegionSet regionSet = mapper.toRegionSet(wpConfig);
+        CuboidRegion region = (CuboidRegion) regionSet.regions().get(0);
+
+        assertTrue(region.subjects().isOwner(SubjectRef.player(ownerUuid)));
+        assertTrue(region.subjects().isMember(SubjectRef.group("trusted")));
+        assertFalse(region.accessPolicy().ownersBypassFlags());
+        assertTrue(region.accessPolicy().membersBypassFlags());
+        assertTrue(region.accessPolicy().ownerBypassFlags().contains(BuiltInFlags.BREAK_BLOCK_KEY));
+        assertTrue(region.accessPolicy().memberBypassFlags().contains(BuiltInFlags.PLACE_BLOCK_KEY));
+    }
+
+    @Test
+    public void testOwnerMemberLoadedFromConfigAffectsProtectionResolver() {
+        UUID ownerUuid = UUID.randomUUID();
+        RegionSubjectsConfig subjects = RegionSubjectsConfig.of(
+                List.of(SubjectRefConfig.of("player:" + ownerUuid)),
+                List.of()
+        );
+        // RegionAccessPolicy defaults to ownerBypass = true
+        RegionAccessPolicyConfig access = RegionAccessPolicyConfig.defaults();
+
+        // Spawn region denies break block
+        RegionConfig rConfig = RegionConfig.of(RegionId.of("spawn"), overworld, 100, bounds, Map.of(
+                BuiltInFlags.BREAK_BLOCK_KEY, FlagRuleConfig.simple(FlagState.DENY)
+        ), subjects, access);
+        WorldProtectConfig wpConfig = WorldProtectConfig.of(List.of(rConfig));
+        RegionSet regionSet = mapper.toRegionSet(wpConfig);
+
+        ProtectionResolver resolver = new ProtectionResolver();
+        Actor playerActor = new Actor(ownerUuid.toString(), ActorType.PLAYER);
+        CauseChain cause = CauseChain.of(ProtectionCause.player());
+        BlockPosRef pos = new BlockPosRef(5, 5, 5);
+        ProtectionQuery query = new ProtectionQuery(playerActor, ProtectionAction.BLOCK_BREAK, cause, ProtectionTarget.unknown(), overworld, pos);
+
+        // Without subject context, action is denied
+        assertTrue(resolver.resolve(query, regionSet).isDenied());
+
+        // With subject context, player is mapped as owner, owner bypasses DENY -> ALLOW
+        dev.sato.worldprotect.protection.subject.ActorSubjects actorSubjects = dev.sato.worldprotect.protection.subject.ActorSubjects.player(playerActor, ownerUuid, List.of());
+        dev.sato.worldprotect.protection.permission.ProtectionSubjectContext context = dev.sato.worldprotect.protection.permission.ProtectionSubjectContext.withoutPermissions(actorSubjects);
+        assertTrue(resolver.resolve(query, regionSet, context).isAllowed());
     }
 }

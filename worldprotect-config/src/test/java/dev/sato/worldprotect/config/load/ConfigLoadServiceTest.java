@@ -11,12 +11,16 @@ import dev.sato.worldprotect.protection.config.ConfigValidationResult;
 import dev.sato.worldprotect.protection.config.FlagRuleConfig;
 import dev.sato.worldprotect.protection.config.RegionConfig;
 import dev.sato.worldprotect.protection.config.WorldProtectConfig;
+import dev.sato.worldprotect.protection.flag.BuiltInFlags;
 import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.flag.FlagRegistry;
+import dev.sato.worldprotect.protection.region.CuboidRegion;
+import dev.sato.worldprotect.protection.subject.SubjectRef;
 import org.junit.jupiter.api.Test;
 import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class ConfigLoadServiceTest {
@@ -366,5 +370,71 @@ public final class ConfigLoadServiceTest {
         assertTrue(result.hasErrors());
         assertTrue(result.diagnostics().messages().stream()
                 .anyMatch(msg -> msg.path().equals("mapper") && msg.message().contains("Mapping to domain failed")));
+    }
+
+    @Test
+    public void testLoadConfigWithSubjectsAndAccessSuccess() {
+        UUID ownerUuid = UUID.randomUUID();
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n" +
+                "[regions.spawn.flags]\n" +
+                "break-block = \"deny\"\n" +
+                "[regions.spawn.subjects]\n" +
+                "owners = [\"player:" + ownerUuid + "\"]\n" +
+                "members = [\"group:trusted\", \"console\"]\n" +
+                "[regions.spawn.access]\n" +
+                "owners-bypass = false\n" +
+                "members-bypass = true\n" +
+                "owner-bypass-flags = [\"break-block\"]\n" +
+                "member-bypass-flags = [\"place-block\"]\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.hasErrors());
+        assertFalse(result.hasWarnings());
+        assertTrue(result.loadedConfig().isPresent());
+
+        LoadedWorldProtectConfig loaded = result.loadedConfig().get();
+        CuboidRegion region = (CuboidRegion) loaded.regionSet().regions().get(0);
+
+        assertTrue(region.subjects().isOwner(SubjectRef.player(ownerUuid)));
+        assertTrue(region.subjects().isMember(SubjectRef.group("trusted")));
+        assertTrue(region.subjects().isMember(SubjectRef.console()));
+
+        assertFalse(region.accessPolicy().ownersBypassFlags());
+        assertTrue(region.accessPolicy().membersBypassFlags());
+        assertTrue(region.accessPolicy().ownerBypassFlags().contains(BuiltInFlags.BREAK_BLOCK_KEY));
+        assertTrue(region.accessPolicy().memberBypassFlags().contains(BuiltInFlags.PLACE_BLOCK_KEY));
+    }
+
+    @Test
+    public void testLoadConfigWithInvalidSubjectsOrAccessFails() {
+        // Unknown flag in access configuration
+        String toml =
+                "[regions.spawn]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = 10\n" +
+                "[regions.spawn.bounds]\n" +
+                "type = \"cuboid\"\n" +
+                "min = [0, 60, 0]\n" +
+                "max = [100, 80, 100]\n" +
+                "[regions.spawn.access]\n" +
+                "owner-bypass-flags = [\"completely-unknown-flag-key\"]\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertTrue(result.diagnostics().messages().stream()
+                .anyMatch(msg -> msg.path().contains("owner-bypass-flags") && msg.message().contains("Unknown flag key")));
     }
 }

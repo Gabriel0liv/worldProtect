@@ -58,6 +58,7 @@ This document lists strict instructions that all future AI agents working on thi
 - **No ID Normalization**: The TOML parser must not normalize (lowercase) region IDs, dimension IDs, or resource selectors. Only flag state enum values may be parsed case-insensitively.
 - **Diagnostics Validation Flow**: TomlConfigParser must return a success result only when there are no ERROR diagnostics. Warnings are allowed to propagate in successful parses.
 - **No Parser Extensions**: Do not add file watchers, hot-reload triggers, or YAML/JSON libraries until explicitly requested.
+- **Raw TOML Parsing**: `TomlConfigParser` must only parse the TOML structure and raw strings (no upfront `FlagKey` or `SubjectRef` domain creation). Owner/member bypass flags inside `RegionAccessPolicyConfig` must be kept as `List<String>`, and flag syntax validation and registry checks must happen within `RegionAccessPolicyConfig.validate(...)`.
 
 ## Configuration Loading Pipeline Rules
 

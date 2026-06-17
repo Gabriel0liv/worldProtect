@@ -16,8 +16,18 @@ public final class RegionConfig {
     private final int priority;
     private final BoundsConfig bounds;
     private final Map<FlagKey, FlagRuleConfig> flags;
+    private final RegionSubjectsConfig subjectsConfig;
+    private final RegionAccessPolicyConfig accessPolicyConfig;
 
-    private RegionConfig(RegionId id, DimensionRef dimension, int priority, BoundsConfig bounds, Map<FlagKey, FlagRuleConfig> flags) {
+    private RegionConfig(
+            RegionId id,
+            DimensionRef dimension,
+            int priority,
+            BoundsConfig bounds,
+            Map<FlagKey, FlagRuleConfig> flags,
+            RegionSubjectsConfig subjectsConfig,
+            RegionAccessPolicyConfig accessPolicyConfig
+    ) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.dimension = Objects.requireNonNull(dimension, "dimension must not be null");
         this.bounds = Objects.requireNonNull(bounds, "bounds must not be null");
@@ -30,10 +40,24 @@ public final class RegionConfig {
         
         this.flags = Map.copyOf(flags);
         this.priority = priority;
+        this.subjectsConfig = Objects.requireNonNull(subjectsConfig, "subjectsConfig must not be null");
+        this.accessPolicyConfig = Objects.requireNonNull(accessPolicyConfig, "accessPolicyConfig must not be null");
     }
 
     public static RegionConfig of(RegionId id, DimensionRef dimension, int priority, BoundsConfig bounds, Map<FlagKey, FlagRuleConfig> flags) {
-        return new RegionConfig(id, dimension, priority, bounds, flags);
+        return new RegionConfig(id, dimension, priority, bounds, flags, RegionSubjectsConfig.empty(), RegionAccessPolicyConfig.defaults());
+    }
+
+    public static RegionConfig of(
+            RegionId id,
+            DimensionRef dimension,
+            int priority,
+            BoundsConfig bounds,
+            Map<FlagKey, FlagRuleConfig> flags,
+            RegionSubjectsConfig subjectsConfig,
+            RegionAccessPolicyConfig accessPolicyConfig
+    ) {
+        return new RegionConfig(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig);
     }
 
     public RegionId id() {
@@ -56,6 +80,14 @@ public final class RegionConfig {
         return flags;
     }
 
+    public RegionSubjectsConfig subjectsConfig() {
+        return subjectsConfig;
+    }
+
+    public RegionAccessPolicyConfig accessPolicyConfig() {
+        return accessPolicyConfig;
+    }
+
     public RegionId getId() {
         return id;
     }
@@ -74,6 +106,14 @@ public final class RegionConfig {
 
     public Map<FlagKey, FlagRuleConfig> getFlags() {
         return flags;
+    }
+
+    public RegionSubjectsConfig getSubjectsConfig() {
+        return subjectsConfig;
+    }
+
+    public RegionAccessPolicyConfig getAccessPolicyConfig() {
+        return accessPolicyConfig;
     }
 
     public ConfigValidationResult validate(FlagRegistry flagRegistry) {
@@ -101,6 +141,12 @@ public final class RegionConfig {
             }
         }
 
+        // Validate subjects
+        result = result.merge(subjectsConfig.validate("regions." + id.getValue() + ".subjects"));
+
+        // Validate access policy
+        result = result.merge(accessPolicyConfig.validate("regions." + id.getValue() + ".access", flagRegistry));
+
         return result;
     }
 
@@ -113,16 +159,20 @@ public final class RegionConfig {
                id.equals(that.id) &&
                dimension.equals(that.dimension) &&
                bounds.equals(that.bounds) &&
-               flags.equals(that.flags);
+               flags.equals(that.flags) &&
+               subjectsConfig.equals(that.subjectsConfig) &&
+               accessPolicyConfig.equals(that.accessPolicyConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, dimension, priority, bounds, flags);
+        return Objects.hash(id, dimension, priority, bounds, flags, subjectsConfig, accessPolicyConfig);
     }
 
     @Override
     public String toString() {
-        return "RegionConfig{id=" + id + ", dimension=" + dimension + ", priority=" + priority + ", bounds=" + bounds + ", flags=" + flags + "}";
+        return "RegionConfig{id=" + id + ", dimension=" + dimension + ", priority=" + priority +
+               ", bounds=" + bounds + ", flags=" + flags + ", subjectsConfig=" + subjectsConfig +
+               ", accessPolicyConfig=" + accessPolicyConfig + "}";
     }
 }

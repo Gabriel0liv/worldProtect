@@ -75,6 +75,12 @@ We support a platform-independent permission and subject domain model for region
 - **Subject Context (`ProtectionSubjectContext`)**: Bundles an actor's subjects and their active permissions to resolve checks.
 - **Subject Resolver (`SubjectResolver`)**: Decouples role matching, global bypasses, and flag/region role bypass evaluation.
 
+### Region Subjects and Access Policy in Configuration
+
+We support defining region subjects (owners and members) and access policies directly in the TOML configuration:
+- **`RegionSubjectsConfig`**: Declares region owners and members using prefix strings (e.g., `player:<uuid>`, `group:<name>`, `console`, `system`). Validates correct format and raises warnings for duplicate declarations or overlapping owners/members.
+- **`RegionAccessPolicyConfig`**: Configures access and bypass permissions for owners and members (e.g., `owners-bypass = true/false`, `owner-bypass-flags = [...]`). Keeps bypass flags as `List<String>` at the parser level to avoid upfront parsing exceptions. Flag syntax validation, registry checks, and duplicate detection occur during structural validation.
+
 ## Conditional Flag Rules and Resource Selectors
 
 Region flags can be configured as simple states or as complex conditional rules:
