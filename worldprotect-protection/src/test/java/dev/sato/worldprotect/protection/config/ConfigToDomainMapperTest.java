@@ -8,6 +8,7 @@ import dev.sato.worldprotect.minecraft.ResourceRef;
 import dev.sato.worldprotect.protection.flag.BuiltInFlags;
 import dev.sato.worldprotect.protection.flag.FlagState;
 import dev.sato.worldprotect.protection.region.CuboidRegion;
+import dev.sato.worldprotect.protection.region.GlobalRegion;
 import dev.sato.worldprotect.protection.region.RegionId;
 import dev.sato.worldprotect.protection.region.RegionSet;
 import dev.sato.worldprotect.protection.rule.FlagRule;
@@ -189,5 +190,26 @@ public final class ConfigToDomainMapperTest {
         dev.sato.worldprotect.protection.subject.ActorSubjects actorSubjects = dev.sato.worldprotect.protection.subject.ActorSubjects.player(playerActor, ownerUuid, List.of());
         dev.sato.worldprotect.protection.permission.ProtectionSubjectContext context = dev.sato.worldprotect.protection.permission.ProtectionSubjectContext.withoutPermissions(actorSubjects);
         assertTrue(resolver.resolve(query, regionSet, context).isAllowed());
+    }
+
+    @Test
+    public void testMapsGlobalRegionConfigToGlobalRegion() {
+        RegionConfig rConfig = RegionConfig.of(
+                RegionId.of("global_overworld"),
+                overworld,
+                -5,
+                BoundsConfig.global(),
+                Map.of(BuiltInFlags.BREAK_BLOCK_KEY, FlagRuleConfig.simple(FlagState.DENY))
+        );
+        WorldProtectConfig wpConfig = WorldProtectConfig.of(List.of(rConfig));
+        RegionSet regionSet = mapper.toRegionSet(wpConfig);
+
+        assertEquals(1, regionSet.regions().size());
+        assertTrue(regionSet.regions().get(0) instanceof GlobalRegion);
+        GlobalRegion region = (GlobalRegion) regionSet.regions().get(0);
+        assertEquals(RegionId.of("global_overworld"), region.getId());
+        assertEquals(overworld, region.getDimension());
+        assertEquals(-5, region.getPriority());
+        assertEquals(FlagState.DENY, region.flags().get(BuiltInFlags.BREAK_BLOCK_KEY).orElse(null));
     }
 }

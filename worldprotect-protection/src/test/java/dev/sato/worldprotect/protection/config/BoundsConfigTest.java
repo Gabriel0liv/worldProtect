@@ -76,4 +76,21 @@ public final class BoundsConfigTest {
         assertFalse(result.isValid());
         assertEquals("regions.spawn.bounds.min", result.errors().get(0).path());
     }
+
+    @Test
+    public void testGlobalBoundsValidationAndExceptions() {
+        BoundsConfig bounds = BoundsConfig.global();
+        assertTrue(bounds.isGlobal());
+        assertFalse(bounds.isCuboid());
+        assertEquals(BoundsType.GLOBAL, bounds.type());
+
+        ConfigValidationResult result = bounds.validate();
+        assertTrue(result.isValid());
+
+        assertThrows(IllegalStateException.class, bounds::min);
+        assertThrows(IllegalStateException.class, bounds::max);
+
+        assertTrue(bounds.minOptional().isEmpty());
+        assertTrue(bounds.maxOptional().isEmpty());
+    }
 }

@@ -3,6 +3,8 @@ package dev.sato.worldprotect.protection.region;
 import dev.sato.worldprotect.minecraft.BlockPosRef;
 import dev.sato.worldprotect.minecraft.DimensionRef;
 import dev.sato.worldprotect.minecraft.ResourceRef;
+import dev.sato.worldprotect.protection.subject.RegionAccessPolicy;
+import dev.sato.worldprotect.protection.subject.RegionSubjects;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,5 +56,59 @@ public final class RegionSetTest {
 
         List<Region> matched = set.matching(overworld, outside);
         assertTrue(matched.isEmpty());
+    }
+
+    @Test
+    public void testGlobalRegionMatchingAndSorting() {
+        DimensionRef overworld = new DimensionRef(ResourceRef.of("minecraft", "overworld"));
+        DimensionRef nether = new DimensionRef(ResourceRef.of("minecraft", "the_nether"));
+
+        BlockPosRef pos1 = new BlockPosRef(5, 5, 5);
+        BlockPosRef pos2 = new BlockPosRef(1000, 1000, 1000);
+
+        // Global Region A: Overworld, priority 0
+        Region rA = new GlobalRegion(
+                RegionId.of("global-overworld"),
+                overworld,
+                0,
+                RegionFlags.empty(),
+                RegionSubjects.empty(),
+                RegionAccessPolicy.defaults()
+        );
+        // Cuboid Region B: Overworld, priority 10
+        Region rB = new CuboidRegion(
+                RegionId.of("cuboid-overworld"),
+                overworld,
+                new BlockPosRef(0, 0, 0),
+                new BlockPosRef(10, 10, 10),
+                10
+        );
+        // Global Region C: Nether, priority 100
+        Region rC = new GlobalRegion(
+                RegionId.of("global-nether"),
+                nether,
+                100,
+                RegionFlags.empty(),
+                RegionSubjects.empty(),
+                RegionAccessPolicy.defaults()
+        );
+
+        RegionSet set = RegionSet.of(List.of(rA, rB, rC));
+
+        // Query Overworld inside cuboid: both rB (priority 10) and rA (priority 0) match
+        List<Region> matchedInside = set.matching(overworld, pos1);
+        assertEquals(2, matchedInside.size());
+        assertEquals("cuboid-overworld", matchedInside.get(0).getId().getValue());
+        assertEquals("global-overworld", matchedInside.get(1).getId().getValue());
+
+        // Query Overworld outside cuboid: only rA (priority 0) matches
+        List<Region> matchedOutside = set.matching(overworld, pos2);
+        assertEquals(1, matchedOutside.size());
+        assertEquals("global-overworld", matchedOutside.get(0).getId().getValue());
+
+        // Query Nether: only rC matches
+        List<Region> matchedNether = set.matching(nether, pos2);
+        assertEquals(1, matchedNether.size());
+        assertEquals("global-nether", matchedNether.get(0).getId().getValue());
     }
 }

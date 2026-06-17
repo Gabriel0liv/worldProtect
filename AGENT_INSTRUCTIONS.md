@@ -73,3 +73,11 @@ This document lists strict instructions that all future AI agents working on thi
 - **Bypass Resolution Flow**: In `ProtectionResolver`, global bypass permissions must allow query actions immediately. Flag-specific bypasses allow matching flags. Role-specific bypasses (owners/members) only apply within regions where the actor actually holds that role, and do not erase same-priority denies in other overlapping regions.
 - **Priority Resolution**: Same-priority DENY overrides same-priority ALLOW (including role/flag bypass ALLOW). Higher-priority regions override lower-priority regions completely (e.g., higher-priority DENY overrides lower-priority OWNER bypass ALLOW).
 - **Wildcard Permissions Excluded**: Segment-aware hierarchy checks (e.g. `worldprotect.bypass.flag.break-block` matches `worldprotect.bypass.flag.*` if implemented via prefixes) must use segment-aware logic via `PermissionKey.startsWith`, but general wildcard symbols like `*` are not supported.
+
+## Global / Dimension-Wide Region Rules
+
+- **Spatial Containment Null Checks**: The `GlobalRegion.contains(BlockPosRef)` method must always validate that the queried position is non-null (e.g. using `Objects.requireNonNull(pos, "pos must not be null")`) before returning `true`, preventing inconsistent behavior with `CuboidRegion` or other region boundary strategies.
+- **Coordinate Access Safety**: For `BoundsConfig`, you must throw `IllegalStateException` if `min()` or `max()` are called when the type is `GLOBAL`. Always use `minOptional()` and `maxOptional()` to safely inspect coordinates without risk of raising exceptions.
+- **Dimension Isolation Constraints**: Global regions must only match positions inside their configured dimension. Ensure that dimension verification always happens in `RegionSet.matching(...)` via `dimension.equals(region.getDimension())` before evaluating coordinate containment. A global region must never match or affect other dimensions.
+- **Normal Bounds Type**: Keep `bounds.type = "global"` as a normal region bounds type. Do not introduce special, hardcoded region names (e.g. `__global__`) inside the domain.
+

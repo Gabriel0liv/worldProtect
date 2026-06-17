@@ -117,33 +117,38 @@ public final class TomlConfigParser {
                 if (typeStr == null) {
                     diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".bounds", "Missing bounds type"));
                     boundsValid = false;
-                } else if (!typeStr.equals("cuboid")) {
-                    diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".bounds", "Unsupported bounds type: " + typeStr));
-                    boundsValid = false;
-                }
+                } else if (typeStr.equals("cuboid")) {
+                    Object minVal = boundsTable.get("min");
+                    TomlArray minArray = (minVal instanceof TomlArray) ? (TomlArray) minVal : null;
+                    Object maxVal = boundsTable.get("max");
+                    TomlArray maxArray = (maxVal instanceof TomlArray) ? (TomlArray) maxVal : null;
 
-                Object minVal = boundsTable.get("min");
-                TomlArray minArray = (minVal instanceof TomlArray) ? (TomlArray) minVal : null;
-                Object maxVal = boundsTable.get("max");
-                TomlArray maxArray = (maxVal instanceof TomlArray) ? (TomlArray) maxVal : null;
+                    ConfigValidationResult[] minDiagRef = new ConfigValidationResult[]{ConfigValidationResult.ok()};
+                    BlockPosRef minPos = parseCoordinates(minArray, "regions." + regionKey + ".bounds.min", minDiagRef);
+                    if (minPos == null) {
+                        diagnostics = diagnostics.merge(minDiagRef[0]);
+                        boundsValid = false;
+                    }
 
-                ConfigValidationResult[] minDiagRef = new ConfigValidationResult[]{ConfigValidationResult.ok()};
-                BlockPosRef minPos = parseCoordinates(minArray, "regions." + regionKey + ".bounds.min", minDiagRef);
-                if (minPos == null) {
-                    diagnostics = diagnostics.merge(minDiagRef[0]);
-                    boundsValid = false;
-                }
+                    ConfigValidationResult[] maxDiagRef = new ConfigValidationResult[]{ConfigValidationResult.ok()};
+                    BlockPosRef maxPos = parseCoordinates(maxArray, "regions." + regionKey + ".bounds.max", maxDiagRef);
+                    if (maxPos == null) {
+                        diagnostics = diagnostics.merge(maxDiagRef[0]);
+                        boundsValid = false;
+                    }
 
-                ConfigValidationResult[] maxDiagRef = new ConfigValidationResult[]{ConfigValidationResult.ok()};
-                BlockPosRef maxPos = parseCoordinates(maxArray, "regions." + regionKey + ".bounds.max", maxDiagRef);
-                if (maxPos == null) {
-                    diagnostics = diagnostics.merge(maxDiagRef[0]);
-                    boundsValid = false;
-                }
-
-                if (boundsValid) {
-                    boundsConfig = BoundsConfig.cuboid(minPos, maxPos);
+                    if (boundsValid) {
+                        boundsConfig = BoundsConfig.cuboid(minPos, maxPos);
+                    } else {
+                        regionValid = false;
+                    }
+                } else if (typeStr.equals("global")) {
+                    if (boundsTable.contains("min") || boundsTable.contains("max")) {
+                        diagnostics = diagnostics.add(ConfigValidationMessage.warning("regions." + regionKey + ".bounds", "Global bounds ignore min/max coordinates"));
+                    }
+                    boundsConfig = BoundsConfig.global();
                 } else {
+                    diagnostics = diagnostics.add(ConfigValidationMessage.error("regions." + regionKey + ".bounds", "Unsupported bounds type: " + typeStr));
                     regionValid = false;
                 }
             }

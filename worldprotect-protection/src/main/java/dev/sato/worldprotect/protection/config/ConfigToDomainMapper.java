@@ -2,6 +2,7 @@ package dev.sato.worldprotect.protection.config;
 
 import dev.sato.worldprotect.protection.flag.FlagKey;
 import dev.sato.worldprotect.protection.region.CuboidRegion;
+import dev.sato.worldprotect.protection.region.GlobalRegion;
 import dev.sato.worldprotect.protection.region.Region;
 import dev.sato.worldprotect.protection.region.RegionFlags;
 import dev.sato.worldprotect.protection.region.RegionSet;
@@ -29,25 +30,34 @@ public final class ConfigToDomainMapper {
         return RegionSet.of(domainRegions);
     }
 
-    public CuboidRegion toRegion(RegionConfig regionConfig) {
+    public Region toRegion(RegionConfig regionConfig) {
         Objects.requireNonNull(regionConfig, "regionConfig must not be null");
         BoundsConfig bounds = regionConfig.bounds();
-        if (bounds.type() != BoundsType.CUBOID) {
-            throw new IllegalArgumentException("Unsupported bounds type: " + bounds.type());
-        }
-
         RegionFlags domainFlags = toRegionFlags(regionConfig.flags());
 
-        return new CuboidRegion(
-                regionConfig.id(),
-                regionConfig.dimension(),
-                bounds.min(),
-                bounds.max(),
-                regionConfig.priority(),
-                domainFlags,
-                regionConfig.subjectsConfig().toDomain(),
-                regionConfig.accessPolicyConfig().toDomain()
-        );
+        if (bounds.type() == BoundsType.CUBOID) {
+            return new CuboidRegion(
+                    regionConfig.id(),
+                    regionConfig.dimension(),
+                    bounds.min(),
+                    bounds.max(),
+                    regionConfig.priority(),
+                    domainFlags,
+                    regionConfig.subjectsConfig().toDomain(),
+                    regionConfig.accessPolicyConfig().toDomain()
+            );
+        } else if (bounds.type() == BoundsType.GLOBAL) {
+            return new GlobalRegion(
+                    regionConfig.id(),
+                    regionConfig.dimension(),
+                    regionConfig.priority(),
+                    domainFlags,
+                    regionConfig.subjectsConfig().toDomain(),
+                    regionConfig.accessPolicyConfig().toDomain()
+            );
+        } else {
+            throw new IllegalArgumentException("Unsupported bounds type: " + bounds.type());
+        }
     }
 
     public RegionFlags toRegionFlags(Map<FlagKey, FlagRuleConfig> flags) {

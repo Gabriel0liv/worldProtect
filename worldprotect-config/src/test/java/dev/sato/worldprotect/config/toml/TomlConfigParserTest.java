@@ -599,4 +599,58 @@ public final class TomlConfigParserTest {
         assertTrue(result3.hasErrors());
         assertEquals("regions.spawn.access.owners-bypass", result3.diagnostics().errors().get(0).path());
     }
+
+    @Test
+    public void testParsesGlobalBoundsWithoutCoordinates() {
+        String toml =
+                "[regions.global_overworld]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = -100\n" +
+                "[regions.global_overworld.bounds]\n" +
+                "type = \"global\"\n" +
+                "[regions.global_overworld.flags]\n" +
+                "break-block = \"deny\"\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+        assertFalse(result.diagnostics().hasWarnings());
+
+        WorldProtectConfig config = result.config().get();
+        assertEquals(1, config.regions().size());
+        assertTrue(config.regions().get(0).bounds().isGlobal());
+    }
+
+    @Test
+    public void testParsesGlobalBoundsWithCoordinatesGeneratesWarning() {
+        String toml =
+                "[regions.global_overworld]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = -100\n" +
+                "[regions.global_overworld.bounds]\n" +
+                "type = \"global\"\n" +
+                "min = [0, 0, 0]\n" +
+                "max = [10, 10, 10]\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertTrue(result.isSuccess());
+        assertTrue(result.diagnostics().hasWarnings());
+        assertEquals(1, result.diagnostics().warnings().size());
+        assertEquals("regions.global_overworld.bounds", result.diagnostics().warnings().get(0).path());
+        assertTrue(result.diagnostics().warnings().get(0).message().contains("Global bounds ignore min/max"));
+    }
+
+    @Test
+    public void testParserRejectsUnknownBoundsType() {
+        String toml =
+                "[regions.global_overworld]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = -100\n" +
+                "[regions.global_overworld.bounds]\n" +
+                "type = \"sphere\"\n";
+
+        TomlConfigParseResult result = parser.parseString(toml);
+        assertFalse(result.isSuccess());
+        assertTrue(result.hasErrors());
+        assertEquals("regions.global_overworld.bounds", result.diagnostics().errors().get(0).path());
+    }
 }

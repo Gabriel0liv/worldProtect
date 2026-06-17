@@ -436,4 +436,27 @@ public final class ConfigLoadServiceTest {
         assertTrue(result.diagnostics().messages().stream()
                 .anyMatch(msg -> msg.path().contains("owner-bypass-flags") && msg.message().contains("Unknown flag key")));
     }
+
+    @Test
+    public void testLoadConfigWithGlobalBounds() {
+        String toml =
+                "[regions.global_overworld]\n" +
+                "dimension = \"minecraft:overworld\"\n" +
+                "priority = -100\n" +
+                "[regions.global_overworld.bounds]\n" +
+                "type = \"global\"\n" +
+                "[regions.global_overworld.flags]\n" +
+                "break-block = \"deny\"\n";
+
+        ConfigLoadService service = ConfigLoadService.createDefault(flagRegistry);
+        ConfigLoadResult result = service.load(StringTomlConfigSource.ofToml(toml));
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.hasErrors());
+        assertTrue(result.loadedConfig().isPresent());
+
+        LoadedWorldProtectConfig loaded = result.loadedConfig().get();
+        assertEquals(1, loaded.regionSet().regions().size());
+        assertTrue(loaded.regionSet().regions().get(0) instanceof dev.sato.worldprotect.protection.region.GlobalRegion);
+    }
 }

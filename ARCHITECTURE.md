@@ -94,6 +94,15 @@ Region flags can be configured as simple states or as complex conditional rules:
 - **Query Resource Extraction**: The `QueryResourceExtractor` is responsible for selecting the primary target resource from a query (e.g., target block, used item, target container, drop item, fluid) depending on the action checked, allowing modded items, containers, block entities, fluids, and explosions to be filtered by resource ID.
 
 
+## Global / Dimension-Wide Regions
+
+We support defining global, dimension-wide regions (e.g., `bounds.type = "global"`) to protect entire dimensions:
+- **Spatial Containment**: Unlike cuboid regions that define `min` and `max` coordinate boundaries, a `GlobalRegion` contains all spatial coordinates. Its `contains(BlockPosRef)` method always returns `true` after verifying that the queried position is non-null.
+- **Dimension Isolation**: To ensure a global region only matches positions within its configured dimension, the `RegionSet.matching(...)` system validates that the query dimension matches the region's dimension (`dimension.equals(region.getDimension())`) before checking spatial containment. A global region never matches queries from other dimensions.
+- **Priority and Overrides**: Global regions are integrated into the priority sorting model alongside cuboid regions. Cuboid regions with higher priority (e.g. priority 100) override lower-priority global regions (e.g. priority -1000000) inside their coordinates, functioning similarly to WorldGuard global regions.
+- **Configuration & Validation**: In the configuration model (`BoundsConfig`), a global bounds type has no coordinate requirements. Calling `min()` or `max()` on a global `BoundsConfig` throws `IllegalStateException`. To prevent silent errors during mapping, safe access is provided via `minOptional()` and `maxOptional()`. If coordinates are specified in a TOML config under a global bounds type, the parser emits a `WARNING` diagnostic but parses the region successfully, ignoring the useless coordinates.
+
+
 ## In-Memory Configuration Model
 
 We represent the plugin configuration in memory using a platform-independent model that mirrors the logical structure of a future persistent file layout (e.g. YAML/TOML/JSON).
